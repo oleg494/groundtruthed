@@ -1,0 +1,50 @@
+=== фетч корзины ===
+  SBER: 1150 баров
+  GAZP: 1150 баров
+  LKOH: 1150 баров
+  ROSN: 1150 баров
+  GMKN: 1146 баров
+  PLZL: 1143 баров
+  CHMF: 1150 баров
+  NVTK: 1146 баров
+  MGNT: 1150 баров
+  TATN: 1148 баров
+  VTBR: 1146 баров
+корзина: 11 бумаг × 1129 общих баров (2022-05-24 … 2026-07-01)
+
+=== grid {'n': [20, 40, 55, 70], 'exit_n': [10, 20], 'stop_mult': [0.0, 3.0]} → 16 испытаний (borrow=16.25 фикс.) ===
+{'n': 55, 'exit_n': 20, 'stop_mult': 0.0}    ret    -2.12%  Sharpe  +0.02  dd  -25.85%  PF  1.08  сделок 143
+{'n': 70, 'exit_n': 20, 'stop_mult': 0.0}    ret    -3.36%  Sharpe  -0.01  dd  -27.45%  PF  1.05  сделок 128
+{'n': 20, 'exit_n': 10, 'stop_mult': 3.0}    ret    -7.88%  Sharpe  -0.11  dd  -23.44%  PF  1.13  сделок 419
+{'n': 20, 'exit_n': 20, 'stop_mult': 3.0}    ret    -8.74%  Sharpe  -0.12  dd  -22.21%  PF  1.11  сделок 378
+{'n': 20, 'exit_n': 20, 'stop_mult': 0.0}    ret   -11.41%  Sharpe  -0.12  dd  -30.78%  PF  1.01  сделок 212
+
+=== anchored walk-forward (warm-up), 4 окон ===
+  окно 1: OOS ret   +2.22%  Sharpe  +0.38  сделок  88  IS Sharpe +0.08  params {'n': 20, 'exit_n': 10, 'stop_mult': 3.0}
+  окно 2: OOS ret   -6.88%  Sharpe  -0.54  сделок  31  IS Sharpe +0.50  params {'n': 70, 'exit_n': 20, 'stop_mult': 0.0}
+  окно 3: OOS ret  -12.78%  Sharpe  -1.17  сделок  34  IS Sharpe +0.14  params {'n': 70, 'exit_n': 20, 'stop_mult': 0.0}
+  окно 4: OOS ret   +9.59%  Sharpe  +1.15  сделок  28  IS Sharpe -0.15  params {'n': 55, 'exit_n': 20, 'stop_mult': 0.0}
+  сквозной OOS: -9.01%
+
+=== робастность ===
+Robustness:
+  PSR (SR>0)           = 51.8%
+  Deflated SR (×16 исп.) = 28.9%
+  чувствительность: метрика по сетке mean=-0.24 std=0.16 (>0 у 6%), robustness=-1.54
+
+=== бенчмарки (полная лента) ===
+buyhold                                      ret    +3.73%  Sharpe  +0.14  dd  -35.64%  PF  0.00  сделок 0
+random(seed=1)                               ret    +9.82%  Sharpe  +0.25  dd  -18.69%  PF  1.20  сделок 197
+best IS {'n': 55, 'exit_n': 20, 'stop_mult': 0.0} ret    -2.12%  Sharpe  +0.02  dd  -25.85%  PF  1.08  сделок 143
+
+=== бенчмарки (OOS-отрезок, от границы окна 1) ===
+buyhold OOS                                  ret    -1.72%  Sharpe  +0.07  dd  -30.92%  PF  0.00  сделок 0
+random(seed=1) OOS                           ret    -4.56%  Sharpe  -0.07  dd  -21.02%  PF  0.94  сделок 148
+стратегия, сшитый OOS (WFA)                  ret    -9.01%
+
+=== абляции (best-IS параметры, полная лента) ===
+borrow=0 (бесплатный шорт)                   ret   +17.18%  Sharpe  +0.35  dd  -19.16%  PF  1.06  сделок 143
+short=False (лонг-онли)                      ret   +25.98%  Sharpe  +0.66  dd  -11.69%  PF  1.91  сделок 76
+
+OOS>0: False (-9.01%)   DSR>0.5: False (0.289)   бьёт bh и random IS: False   OOS: False
+ВЕРДИКТ: KILL — эдж не доказан

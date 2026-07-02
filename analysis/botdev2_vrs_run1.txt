@@ -1,0 +1,45 @@
+=== фетч корзины ===
+  SBER: 1150 баров
+  GAZP: 1150 баров
+  LKOH: 1150 баров
+  ROSN: 1150 баров
+  GMKN: 1146 баров
+  PLZL: 1143 баров
+  CHMF: 1150 баров
+  NVTK: 1146 баров
+  MGNT: 1150 баров
+  TATN: 1148 баров
+  VTBR: 1146 баров
+корзина: 11 бумаг × 1129 общих баров (2022-05-24 … 2026-07-01)
+
+=== grid {'target_vol': [0.1, 0.15, 0.2, 0.25], 'lookback': [10, 20, 40, 60], 'rebalance': [5, 21]} → 32 испытаний ===
+{'target_vol': 0.25, 'lookback': 40, 'rebalance': 5} ret   +11.38%  Sharpe  +0.22  dd  -37.33%  PF  4.18  сделок 104
+{'target_vol': 0.15, 'lookback': 40, 'rebalance': 5} ret    +9.33%  Sharpe  +0.21  dd  -34.47%  PF  2.66  сделок 172
+{'target_vol': 0.2, 'lookback': 40, 'rebalance': 21} ret    +9.14%  Sharpe  +0.20  dd  -36.31%  PF  4.26  сделок 66
+{'target_vol': 0.2, 'lookback': 40, 'rebalance': 5} ret    +8.26%  Sharpe  +0.19  dd  -34.98%  PF  3.82  сделок 130
+{'target_vol': 0.25, 'lookback': 40, 'rebalance': 21} ret    +7.97%  Sharpe  +0.19  dd  -38.60%  PF  3.73  сделок 57
+
+средняя экспозиция best (после входа): 0.93 → в среднем 7% капитала лежит МЁРТВЫМ кэшем (0%, без прокси)
+
+=== anchored walk-forward (warm-up), 4 окон ===
+  окно 1: OOS ret  +17.62% Sharpe +1.99 dd  -5.66% | buyhold ret  +27.07% Sharpe +2.01 dd  -8.29% | ΔSharpe -0.02 Δdd +2.63пп | params {'target_vol': 0.1, 'lookback': 60, 'rebalance': 5}
+  окно 2: OOS ret  -10.38% Sharpe -0.83 dd -21.93% | buyhold ret  -10.27% Sharpe -0.44 dd -29.19% | ΔSharpe -0.39 Δdd +7.27пп | params {'target_vol': 0.1, 'lookback': 60, 'rebalance': 5}
+  окно 3: OOS ret   -3.35% Sharpe -0.19 dd -12.59% | buyhold ret   -4.99% Sharpe -0.13 dd -21.87% | ΔSharpe -0.06 Δdd +9.28пп | params {'target_vol': 0.15, 'lookback': 40, 'rebalance': 5}
+  окно 4: OOS ret  -15.79% Sharpe -1.44 dd -23.21% | buyhold ret  -17.22% Sharpe -1.27 dd -25.04% | ΔSharpe -0.17 Δdd +1.83пп | params {'target_vol': 0.15, 'lookback': 40, 'rebalance': 5}
+  сквозной OOS: -14.20%  |  Sharpe лучше buyhold: 0/4 окон, dd мельче: 4/4
+
+=== робастность ===
+Robustness:
+  PSR (SR>0)           = 67.9%
+  Deflated SR (×32 исп.) = 51.9%
+  чувствительность: метрика по сетке mean=0.08 std=0.09 (>0 у 88%), robustness=0.87
+
+=== бенчмарки (полная лента) ===
+buyhold (та же корзина)            ret    +3.73%  Sharpe  +0.14  dd  -35.64%  PF  0.00  сделок 0
+random(seed=1)                     ret    +9.82%  Sharpe  +0.25  dd  -18.69%  PF  1.20  сделок 197
+best IS {'target_vol': 0.25, 'lookback': 40, 'rebalance': 5} ret   +11.38%  Sharpe  +0.22  dd  -37.33%  PF  4.18  сделок 104
+
+OOS>0: False (-14.20%)   DSR>0.5: True (0.519)
+vs buyhold: Sharpe лучше: True (+0.22 vs +0.14)   dd мельче: False (-37.33% vs -35.64%)   ret сопоставим (>=80% bh): True (+11.38% vs +3.73%)
+бьёт random по Sharpe: False   OOS-устойчивость (ΔSharpe>0 в ≥1/2 окон): False (0/4)
+ВЕРДИКТ: KILL — эдж не доказан

@@ -1,0 +1,30 @@
+=== фетч корзины (кэш) ===
+  SBER: 1150 баров
+  GAZP: 1150 баров
+  LKOH: 1150 баров
+  ROSN: 1150 баров
+  GMKN: 1146 баров
+  PLZL: 1143 баров
+  CHMF: 1150 баров
+  NVTK: 1146 баров
+  MGNT: 1150 баров
+  TATN: 1148 баров
+  VTBR: 1146 баров
+
+=== WFA штатный (кэш мёртвый, 0%) ===
+  окно 1: OOS ret  +17.62%  params {'target_vol': 0.1, 'lookback': 60, 'rebalance': 5}
+  окно 2: OOS ret  -10.38%  params {'target_vol': 0.1, 'lookback': 60, 'rebalance': 5}
+  окно 3: OOS ret   -3.35%  params {'target_vol': 0.15, 'lookback': 40, 'rebalance': 5}
+  окно 4: OOS ret  -15.79%  params {'target_vol': 0.15, 'lookback': 40, 'rebalance': 5}
+  сквозной OOS: -14.20%
+  экспозиция {'lookback': 40, 'rebalance': 5, 'target_vol': 0.15}: средняя 0.75 (мёртвый кэш в среднем 25%)
+  экспозиция {'lookback': 60, 'rebalance': 5, 'target_vol': 0.1}: средняя 0.55 (мёртвый кэш в среднем 45%)
+
+=== WFA с кэш-прокси 14.25% (абляция, как absmom) ===
+  окно 1: OOS ret  +23.44%  params {'target_vol': 0.1, 'lookback': 60, 'rebalance': 21}
+  окно 2: OOS ret   -4.46%  params {'target_vol': 0.1, 'lookback': 60, 'rebalance': 21}
+  окно 3: OOS ret   +7.27%  params {'target_vol': 0.1, 'lookback': 60, 'rebalance': 21}
+  окно 4: OOS ret  -10.36%  params {'target_vol': 0.1, 'lookback': 60, 'rebalance': 21}
+  сквозной OOS: +13.41%
+
+вклад кэш-прокси в сквозной OOS: +27.61 п.п. (-14.20% → +13.41%)

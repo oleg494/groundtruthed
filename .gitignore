@@ -1,0 +1,31 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+lab/lab.db
+lab/lab_state.json
+lab/lab.pid
+lab/*.tmp
+
+# daybot рабочие файлы
+daybot/daybot.db
+daybot/daybot.log
+daybot/daybot_state.json
+daybot/daybot.pid
+daybot/daybot.stop
+
+# backtest: кэш скачанных свечей (генерируется, не код)
+backtest/.cache/
+
+.pytest_cache/
+
+# analysis: генерируемые бэктестером отчёты (регенерируются командой)
+analysis/bt.json
+analysis/bt_*.html
+analysis/bt_*.csv
+analysis/bt_macd.json
+analysis/backtest_*.html
+# analysis: черновой скрэтч (консольные дампы)
+analysis/_*.txt
+# analysis: машинные дампы/снимки (регенерируются скриптами)
+analysis/*.json

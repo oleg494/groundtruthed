@@ -1,0 +1,47 @@
+=== фетч корзины ===
+  SBER: 1150 баров
+  GAZP: 1150 баров
+  LKOH: 1150 баров
+  ROSN: 1150 баров
+  GMKN: 1146 баров
+  PLZL: 1143 баров
+  CHMF: 1150 баров
+корзина: 7 бумаг × 1139 общих баров (2022-05-24 … 2026-07-01)
+
+=== grid {'bb_n': [15, 20, 30], 'bb_k': [1.5, 2.0, 2.5], 'hurst_max': [0.42, 0.45, 0.5, 1.5]} → 36 испытаний ===
+{'bb_n': 30, 'bb_k': 1.5, 'hurst_max': 0.42} ret    +6.65%  Sharpe  +0.81  dd   -3.46%  PF  5.55  сделок 13
+{'bb_n': 30, 'bb_k': 2.5, 'hurst_max': 0.45} ret    +5.16%  Sharpe  +0.60  dd   -3.47%  PF  3.79  сделок 7
+{'bb_n': 30, 'bb_k': 2.5, 'hurst_max': 0.5}  ret    +4.23%  Sharpe  +0.39  dd   -4.84%  PF  2.40  сделок 13
+{'bb_n': 20, 'bb_k': 2.5, 'hurst_max': 0.45} ret    +2.30%  Sharpe  +0.32  dd   -2.63%  PF  3.41  сделок 7
+{'bb_n': 20, 'bb_k': 1.5, 'hurst_max': 0.42} ret    +2.34%  Sharpe  +0.29  dd   -3.51%  PF  2.98  сделок 14
+{'bb_n': 30, 'bb_k': 2.5, 'hurst_max': 1.5}  ret    +9.65%  Sharpe  +0.28  dd  -13.18%  PF  1.92  сделок 65
+  … контроль без гейта (hurst_max=1.5), топ по Sharpe среди них:
+  {'bb_n': 30, 'bb_k': 2.5, 'hurst_max': 1.5} ret    +9.65%  Sharpe  +0.28  dd  -13.18%  PF  1.92  сделок 65
+  {'bb_n': 30, 'bb_k': 2.0, 'hurst_max': 1.5} ret    +0.56%  Sharpe  +0.06  dd  -13.63%  PF  1.42  сделок 97
+
+=== anchored walk-forward (warm-up), 4 окон ===
+  окно 1: OOS ret   +3.34%  Sharpe  +2.09  сделок  12  IS Sharpe +1.67  params {'bb_n': 15, 'bb_k': 1.5, 'hurst_max': 0.5}
+  окно 2: OOS ret   -6.13%  Sharpe  -1.29  сделок  17  IS Sharpe +1.84  params {'bb_n': 15, 'bb_k': 1.5, 'hurst_max': 0.5}
+  окно 3: OOS ret   +1.03%  Sharpe  +1.08  сделок   1  IS Sharpe +0.71  params {'bb_n': 30, 'bb_k': 1.5, 'hurst_max': 0.42}
+  окно 4: OOS ret   +1.46%  Sharpe  +0.86  сделок   3  IS Sharpe +0.75  params {'bb_n': 30, 'bb_k': 1.5, 'hurst_max': 0.42}
+  сквозной OOS: -0.56%
+  всего OOS-сделок: 33 (≥30 на шаг НЕ выполняется)
+
+=== робастность ===
+Robustness:
+  PSR (SR>0)           = 96.1%
+  Deflated SR (×36 исп.) = 70.7%
+  чувствительность: метрика по сетке mean=0.05 std=0.26 (>0 у 53%), robustness=0.18
+
+=== бенчмарки (полная лента) ===
+buyhold                                      ret   +11.41%  Sharpe  +0.22  dd  -32.39%  PF  0.00  сделок 0
+random(seed=1)                               ret   +17.70%  Sharpe  +0.40  dd  -16.57%  PF  1.42  сделок 132
+best IS {'bb_n': 30, 'bb_k': 1.5, 'hurst_max': 0.42} ret    +6.65%  Sharpe  +0.81  dd   -3.46%  PF  5.55  сделок 13
+
+=== OOS-отрезок (2023-04-13 …) ===
+  стратегия (сшитый WFA): -0.56%
+  buyhold:                +7.15%
+  random(seed=1):         +23.11%
+
+OOS>0: False   DSR>0.5: True (0.707)   бьёт buyhold и random на OOS: False
+ВЕРДИКТ: KILL — эдж не доказан
