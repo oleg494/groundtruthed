@@ -1,10 +1,11 @@
 """Тесты волны 4: риск-метрики, календарь, валидация, random/robust оптимизация."""
 import math
 
-from backtest import candles, strategies, risk, validate
-from backtest.engine import Strategy, Result, run
-from backtest.optimize import grid_search, random_search, robust_select
 from conftest import bars_from_ohlc
+
+from backtest import candles, risk, strategies, validate
+from backtest.engine import Result, Strategy, run
+from backtest.optimize import grid_search, random_search, robust_select
 
 
 # ── risk metrics ──

@@ -10,9 +10,9 @@ from __future__ import annotations
 import random
 from typing import Optional
 
-from .engine import Strategy, Context
 from . import indicators as ta
 from . import sizing
+from .engine import Context, Strategy
 
 
 # ───────────────────────── бенчмарки ─────────────────────────
@@ -297,7 +297,11 @@ class XSecMomentum(Strategy):
         if len(scored) < len(ctx.tickers()):       # ждём прогрева ВСЕЙ корзины
             return
         scored.sort(reverse=True)
-        winners = {t for _, t in scored[:self.top]}
+        # список, НЕ set: порядок исполнения ордеров-победителей обязан быть
+        # детерминирован (set строк хешируется по PYTHONHASHSEED — рандомизирован
+        # между процессами) — иначе итоговая доходность плывёт от запуска к запуску
+        # при отсутствии lookahead-бага (см. analysis/rerun_fixed_engine_result.md)
+        winners = [t for _, t in scored[:self.top]]
         for t in ctx.tickers():                     # сначала продажи — освобождаем кэш
             if t not in winners and ctx.position(t) != 0:
                 ctx.close(t)
@@ -328,7 +332,7 @@ class AbsMomentumSwitch(Strategy):
                       for t in ctx.tickers()
                       if ctx.instrument(t).is_futures and ctx.position(t))
         free = max(0.0, ctx.cash - blocked)
-        ctx._b.cash += free * self.rate / 100.0 / 252.0
+        ctx.adjust_cash(free * self.rate / 100.0 / 252.0, "cash_interest")
         if ctx.i % self.rebalance != 0:
             return
         lb = self.lb_m * 21
@@ -982,7 +986,7 @@ class TrendLSStocks(Strategy):
                 for t in ts
                 if ctx.position(t) < 0 and not ctx.instrument(t).is_futures)
             if short_notional > 0:
-                ctx._b.cash -= short_notional * self.borrow / 100.0 / 252.0
+                ctx.adjust_cash(-short_notional * self.borrow / 100.0 / 252.0, "short_borrow")
         w = self.frac / len(ts)
         for t in ts:
             if ctx.position(t) != 0 and ctx.update_stops(t):

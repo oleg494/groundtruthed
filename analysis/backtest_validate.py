@@ -16,7 +16,10 @@
   [2] ШИРОКАЯ (все 17 стратегий): переигрываем equity из ПОТОКА исполненных ордеров
       движка (fills) отдельным кодом — для cash-модели, шортов (pairs) и фьючерсной
       маржи. Не реконструирует сигнал (доверяет fill_i), зато покрывает каждую
-      стратегию и каждую денежную ветку аккаунтинга.
+      стратегию и каждую денежную ветку аккаунтинга. Плюс result.cash_adjustments —
+      официальный канал прямых правок кэша (Context.adjust_cash), которым пользуются
+      absmom_switch (капитализация свободного кэша) и trend_ls_stocks (плата за
+      шорт-заимствование) — см. analysis/backtest_validate_divergence_result.md.
 """
 from __future__ import annotations
 
@@ -28,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from backtest import candles
 from backtest.core import Instrument
 from backtest.engine import run
-from backtest.strategies import REGISTRY, SMACross, BuyHold
+from backtest.strategies import REGISTRY, BuyHold, SMACross
 
 EPS = 1e-6
 COMM = 0.0005
@@ -101,12 +104,19 @@ def indep_buyhold(bars, frac, cash0, comm, slip, mult, lot):
 # ───────────────────── проверка [2]: переигровка из fills ─────────────────────
 def replay_from_fills(result, data, instruments, comm):
     """Независимо собрать equity из потока исполненных ордеров движка + баров.
-    Поддерживает cash и futures (реализованный P&L кредитуется в кэш при сокращении)."""
+    Поддерживает cash и futures (реализованный P&L кредитуется в кэш при сокращении).
+    Плюс result.cash_adjustments — прямые правки кэша мимо ордера (Context.adjust_cash:
+    капитализация свободного кэша, плата за шорт-заимствование), без которых check[2]
+    для absmom_switch/trend_ls_stocks расходился на пропущенный денежный поток
+    (см. analysis/backtest_validate_divergence_result.md)."""
     closes = {t: {b.t: b.c for b in bars} for t, bars in data.items()}
     times = result.times
     fills_by_i: dict[int, list] = {}
     for o in result.fills:
         fills_by_i.setdefault(o.fill_i, []).append(o)
+    adj_by_i: dict[int, float] = {}
+    for i, delta, _reason in getattr(result, "cash_adjustments", []):
+        adj_by_i[i] = adj_by_i.get(i, 0.0) + delta
 
     cash = result.cash0
     pos = {t: 0.0 for t in instruments}
@@ -115,6 +125,7 @@ def replay_from_fills(result, data, instruments, comm):
     eq_curve = []
     comm_field_ok = True
     for i, t_stamp in enumerate(times):
+        cash += adj_by_i.get(i, 0.0)
         for o in fills_by_i.get(i, []):
             inst = instruments[o.ticker]
             mult, is_fut = inst.multiplier, inst.is_futures

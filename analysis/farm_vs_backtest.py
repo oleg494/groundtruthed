@@ -29,11 +29,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import candles, strategies          # noqa: E402
-from backtest.core import Instrument               # noqa: E402
-from backtest.engine import run                    # noqa: E402
-from backtest.metrics import metrics               # noqa: E402
-from lab.instruments import INSTRUMENTS, BASKET    # noqa: E402  (только реестр UID, не сеть)
+from backtest import candles, strategies  # noqa: E402
+from backtest.core import Instrument  # noqa: E402
+from backtest.engine import run  # noqa: E402
+from backtest.metrics import metrics  # noqa: E402
+from lab.instruments import BASKET, INSTRUMENTS  # noqa: E402  (только реестр UID, не сеть)
 
 DAYS = 500
 CASH = 100_000.0
@@ -100,7 +100,7 @@ def main():
         out["basket"][tk] = rows
 
     # ── gold_trend: фьючерс GLDRUBF, цена в пунктах ──
-    print(f"\n━━ GLDRUBF (фьюч, пункты): gold_trend = sma_cross 10/30, лонг-онли")
+    print("\n━━ GLDRUBF (фьюч, пункты): gold_trend = sma_cross 10/30, лонг-онли")
     try:
         gdata = fetch("GLDRUBF")
         gbars = gdata["GLDRUBF"]

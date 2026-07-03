@@ -21,8 +21,8 @@ READ-ONLY.
 """
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 BASE = "https://invest-public-api.tinkoff.ru/rest"

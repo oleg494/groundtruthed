@@ -1,0 +1,20 @@
+# CI: линтер + тесты при каждом push/PR.
+# t-tech-investments недоступен в CI (приватный индекс T-Bank) — тестам он не нужен:
+# backtest/ на чистой stdlib, tests/ не дёргает боевое API.
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install python-dotenv pandas requests pytest ruff
+      - run: ruff check .
+      - run: python -m pytest tests/ -q
+      - run: python -m unittest test_trading -v
+      - run: python -m unittest test_forward -v

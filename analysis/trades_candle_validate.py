@@ -12,8 +12,8 @@ READ-ONLY.
 """
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -128,7 +128,7 @@ def main():
         ok = cnt[f] == n
         print(f"  {(G+'OK  ' if ok else Y+'    ')}{X}{f}: {cnt[f]}/{n}")
     print(f"\n  {DIM}H/L/V не зависят от порядка сделок → точны. O/C зависят от того, какая сделка")
-    print(f"  первая/последняя; при совпадении СЕКУНДНЫХ меток субсекундный порядок не отдаётся,")
+    print("  первая/последняя; при совпадении СЕКУНДНЫХ меток субсекундный порядок не отдаётся,")
     print(f"  поэтому open/close иногда неоднозначны. Примеры:{X}")
     for m, b, (co, cc) in oc_bad[:3]:
         print(f"  {DIM}   {m}: сделки O{b['o']}/C{b['c']} vs свеча O{co}/C{cc} "

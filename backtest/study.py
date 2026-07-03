@@ -11,17 +11,17 @@
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
-from .core import Bar, Instrument
-from .engine import Strategy, Result, run
-from .metrics import metrics, Metrics
-from .optimize import grid_search, walk_forward, GridPoint, WalkForward
-from .montecarlo import bootstrap_trades, MCResult
-from .robust import assess, Robustness, oos_degradation
-from .benchmark import compare, Comparison
 from . import strategies as _strat
+from .benchmark import Comparison, compare
+from .core import Bar, Instrument
+from .engine import Result, run
+from .metrics import Metrics
+from .montecarlo import MCResult, bootstrap_trades
+from .optimize import GridPoint, WalkForward, grid_search, walk_forward
+from .robust import Robustness, assess, oos_degradation
 
 
 @dataclass

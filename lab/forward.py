@@ -16,8 +16,8 @@ import statistics
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from .journal import conn, DB
 from .instruments import INSTRUMENTS
+from .journal import DB, conn
 
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "lab_state.json"      # runner кладёт сюда accounts {name: accountId}

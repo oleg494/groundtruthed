@@ -3,18 +3,17 @@
 REST-путь к T-Invest API (без SDK) — читает токен из .env (TINVEST_API_KEY).
 Read-only: дёргает только OperationsService/GetOperationsByCursor.
 """
-import os
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
 
-
 def load_accounts():
-    for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
+    env = Path(__file__).resolve().parent.parent / ".env"
+    for line in env.read_text(encoding="utf-8").splitlines():
         if line.startswith("TINVEST_ACCOUNTS="):
             return [a.strip() for a in line.split("=", 1)[1].split(",") if a.strip()]
     raise SystemExit("Set TINVEST_ACCOUNTS=id1,id2 in .env")

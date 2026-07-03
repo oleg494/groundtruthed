@@ -21,7 +21,8 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backtest import candles, indicators as ta
+from backtest import candles
+from backtest import indicators as ta
 from backtest.core import Instrument
 from backtest.engine import Strategy, run
 

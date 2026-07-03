@@ -15,8 +15,8 @@
 """
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -175,13 +175,13 @@ def reconcile(account_id: str, ops: list) -> bool:
     # --- Тождество (1): деньги ---
     d_cash = cash_calc - cash_real
     ok_cash = abs(d_cash) <= EPS
-    print(f"\n[1] ДЕНЬГИ")
+    print("\n[1] ДЕНЬГИ")
     print(f"    Σ payment (расчёт):  {cash_calc:+14.2f} ₽")
     print(f"    money (оракул):      {cash_real:+14.2f} ₽")
     print(f"    расхождение:         {d_cash:+14.2f} ₽   -> {'PASS' if ok_cash else 'FAIL'}")
 
     # --- Тождество (2): бумаги по ISIN (uid мигрируют) ---
-    print(f"\n[2] БУМАГИ (агрегация по ISIN — uid могут мигрировать)")
+    print("\n[2] БУМАГИ (агрегация по ISIN — uid могут мигрировать)")
     calc_isin: dict[str, int] = defaultdict(int)
     uid_meta: dict[str, dict] = {}
     for uid, q in qty_by_uid.items():

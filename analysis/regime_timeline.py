@@ -42,7 +42,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import candles                      # noqa: E402
+from backtest import candles  # noqa: E402
 from backtest.indicators import adx, atr, hurst, sma, stdev  # noqa: E402
 
 # ─────────────────────────── константы (пороги из deep/) ───────────────────────────

@@ -19,12 +19,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import candles, strategies                    # noqa: E402
-from backtest.engine import run                              # noqa: E402
-from backtest.metrics import metrics                         # noqa: E402
-from backtest.optimize import grid_search                    # noqa: E402
-from backtest.robust import assess                           # noqa: E402
-from lab.instruments import INSTRUMENTS                      # noqa: E402
+from backtest import candles, strategies  # noqa: E402
+from backtest.engine import run  # noqa: E402
+from backtest.metrics import metrics  # noqa: E402
+from backtest.optimize import grid_search  # noqa: E402
+from backtest.robust import assess  # noqa: E402
+from lab.instruments import INSTRUMENTS  # noqa: E402
 
 DAYS = 1000            # календарных; from_tinvest берёт days*1.5 → старт ~2022-05,
                        # февраль-2022 не пересекаем (граница режима, deep/walk_forward_moex.md)

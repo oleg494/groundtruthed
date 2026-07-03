@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 from .core import Bar, Instrument
-from .engine import Strategy, Result, run
-from .metrics import metrics, Metrics
+from .engine import Result, Strategy, run
+from .metrics import Metrics, metrics
 
 
 @dataclass

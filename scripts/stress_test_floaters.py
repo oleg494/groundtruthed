@@ -262,7 +262,7 @@ def print_summary():
     # Корп. флоатер AA
     floater_result = corp_floater_impact(CORP_FLOATERS["AA (КС+165)"], new_kr, delta)
 
-    print(f"\n  Инструмент          Доходн.  Цен.удар  Итого (1г)")
+    print("\n  Инструмент          Доходн.  Цен.удар  Итого (1г)")
     print(f"  {'─'*55}")
     print(f"  Фонд {best_fund}          {fund_result['net_yield']:>6.2f}%     —       "
           f"{fund_result['net_yield']:>6.2f}%")

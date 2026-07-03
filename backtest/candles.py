@@ -11,11 +11,10 @@ import json
 import math
 import random
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Optional
 
 from .core import Bar
 
@@ -210,7 +209,7 @@ def from_tinvest(uid: str, ticker: str, days: int = 365,
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read())
             candles_raw.extend(data.get("candles", []))
-        
+
         curr_start = curr_end
         time.sleep(0.3)  # Снижаем нагрузку/лимиты
 
@@ -230,7 +229,7 @@ def from_tinvest(uid: str, ticker: str, days: int = 365,
         if b.t not in seen_ts:
             seen_ts.add(b.t)
             unique_bars.append(b)
-    
+
     if use_cache:
         key.write_text(json.dumps([b.__dict__ for b in unique_bars]), encoding="utf-8")
     return {ticker: unique_bars}

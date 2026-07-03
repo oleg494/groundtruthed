@@ -8,8 +8,8 @@
 """
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 

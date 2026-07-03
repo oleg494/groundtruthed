@@ -14,12 +14,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import candles, strategies                    # noqa: E402
-from backtest.engine import run                              # noqa: E402
-from backtest.metrics import metrics                         # noqa: E402
-from backtest.optimize import grid_search, walk_forward      # noqa: E402
-from backtest.robust import assess                           # noqa: E402
-from lab.instruments import INSTRUMENTS                      # noqa: E402
+from backtest import candles, strategies  # noqa: E402
+from backtest.engine import run  # noqa: E402
+from backtest.metrics import metrics  # noqa: E402
+from backtest.optimize import grid_search  # noqa: E402
+from backtest.robust import assess  # noqa: E402
+from lab.instruments import INSTRUMENTS  # noqa: E402
 
 DAYS = 1000            # календарных; старт ~2023-10 — февраль-2022 не пересекаем
 CASH = 100_000.0

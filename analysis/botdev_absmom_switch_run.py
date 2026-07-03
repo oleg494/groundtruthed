@@ -21,11 +21,10 @@ from datetime import datetime, timezone
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from backtest import candles, strategies, run, metrics                     # noqa: E402
-from backtest.core import Bar, Instrument                                  # noqa: E402
-from backtest.optimize import grid_search, walk_forward                    # noqa: E402
-from backtest.robust import (deflated_sharpe, oos_degradation,             # noqa: E402
-                             probabilistic_sharpe)
+from backtest import candles, metrics, run, strategies  # noqa: E402
+from backtest.core import Bar, Instrument  # noqa: E402
+from backtest.optimize import grid_search, walk_forward  # noqa: E402
+from backtest.robust import deflated_sharpe, probabilistic_sharpe  # noqa: E402
 
 CUTOFF = int(datetime(2022, 3, 24, tzinfo=timezone.utc).timestamp())  # пост-приостановка MOEX
 CASH = 1_000_000.0

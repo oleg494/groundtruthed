@@ -1,8 +1,6 @@
 """Тесты робастности: PSR/DSR, чувствительность, деградация IS→OOS (R5)."""
-import math
 
-from backtest import candles, strategies, robust
-from backtest.engine import run
+from backtest import candles, robust, strategies
 from backtest.optimize import grid_search, walk_forward
 
 

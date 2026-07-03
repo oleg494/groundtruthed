@@ -1,15 +1,15 @@
 """Тесты волны 2: ресэмплинг, парный трейдинг, аналитика, экспорт, режим, издержки, HTML."""
 import json
-import math
 
-from backtest import candles, strategies, export
+from conftest import bars_from_ohlc
+
+from backtest import candles, export, strategies
+from backtest.analytics import trade_analytics
 from backtest.core import Bar, Trade
 from backtest.engine import Result, run
 from backtest.metrics import metrics
-from backtest.analytics import trade_analytics
-from backtest.optimize import grid_search, cost_sensitivity
-from backtest.report import tearsheet_html, heatmap_html
-from conftest import bars_from_ohlc
+from backtest.optimize import cost_sensitivity, grid_search
+from backtest.report import heatmap_html, tearsheet_html
 
 
 # ── W1 resample ──

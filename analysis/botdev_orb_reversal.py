@@ -15,9 +15,7 @@ walk-forward → Deflated Sharpe → сравнение с buyhold и random н�
 """
 from __future__ import annotations
 
-import itertools
 import json
-import math
 import random
 import sys
 from datetime import datetime, timezone
@@ -26,13 +24,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import candles, strategies                    # noqa: E402
-from backtest.core import Bar, Instrument                   # noqa: E402
-from backtest.engine import run                             # noqa: E402
-from backtest.metrics import metrics                        # noqa: E402
-from backtest.optimize import grid_search, walk_forward     # noqa: E402
-from backtest import robust as robust_mod                   # noqa: E402
-from lab.instruments import INSTRUMENTS                     # noqa: E402
+from backtest import candles, strategies  # noqa: E402
+from backtest import robust as robust_mod  # noqa: E402
+from backtest.core import Bar, Instrument  # noqa: E402
+from backtest.engine import run  # noqa: E402
+from backtest.metrics import metrics  # noqa: E402
+from backtest.optimize import grid_search, walk_forward  # noqa: E402
+from lab.instruments import INSTRUMENTS  # noqa: E402
 
 CASH = 100_000.0
 COMMISSION = 0.0005

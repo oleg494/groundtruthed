@@ -16,19 +16,19 @@ from __future__ import annotations
 import json
 import sys
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import candles, strategies          # noqa: E402
-from backtest.core import Bar, Instrument          # noqa: E402
-from backtest.engine import run                    # noqa: E402
-from backtest.metrics import metrics               # noqa: E402
-from lab.instruments import INSTRUMENTS            # noqa: E402
+from backtest import candles, strategies  # noqa: E402
+from backtest.core import Bar, Instrument  # noqa: E402
+from backtest.engine import run  # noqa: E402
+from backtest.metrics import metrics  # noqa: E402
+from lab.instruments import INSTRUMENTS  # noqa: E402
 
 CACHE = ROOT / "backtest" / ".cache"
 INTERVAL = "CANDLE_INTERVAL_30_MIN"

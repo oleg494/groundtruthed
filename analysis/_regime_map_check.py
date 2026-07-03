@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from backtest import candles                     # noqa: E402
+from backtest import candles  # noqa: E402
 from backtest.indicators import adx, hurst, sma  # noqa: E402
 
 TL = json.loads((ROOT / "analysis" / "regime_timeline.json").read_text(encoding="utf-8"))
@@ -94,6 +94,7 @@ print("\n=== 4. Независимый перерасчёт ячеек (SBER) ==
 uid = "e6123145-9665-43e0-8413-cd61b8aa9b13"
 bars = candles.from_tinvest(uid, "SBER", days=1040)["SBER"]
 from datetime import datetime, timezone
+
 date_of = {datetime.fromtimestamp(b.t, tz=timezone.utc).strftime("%Y-%m-%d"): i
            for i, b in enumerate(bars)}
 reg_by_date = {r["date"]: r["regime"] for r in TL["instruments"]["SBER"]}

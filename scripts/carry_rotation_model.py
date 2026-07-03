@@ -18,9 +18,9 @@ READ-ONLY: Bonds / GetBondCoupons / GetLastPrices. Цена облигации �
 import json
 import sys
 import time
-import urllib.request
 import urllib.error
-from datetime import datetime, timezone, timedelta
+import urllib.request
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 BASE = "https://invest-public-api.tinkoff.ru/rest"
@@ -486,7 +486,7 @@ def main():
                   f"{b['carry'] * 100:.2f} | {b['rolldown'] * 100:.2f} |")
     md += [
         "",
-        f"Флоатеры-представители: " + ", ".join(
+        "Флоатеры-представители: " + ", ".join(
             f"{p['ticker']} ({p['name']}, погаш. {p['maturity'].strftime('%m.%Y')}, "
             f"цена {prices.get(p['uid'], 0.0):.2f}%)" for p in pk_picks) + ".",
         "",

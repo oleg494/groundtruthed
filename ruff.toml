@@ -1,0 +1,17 @@
+# ruff — линтер/форматтер для Python.
+# Конфиг сознательно минимальный: проект — research-воркспейс (не installable-пакет),
+# много скриптов с автономным import-bootstrapping (sys.path-хаки → E402).
+target-version = "py310"
+line-length = 120
+
+[lint]
+# E/W — pycodestyle, F — pyflakes, I — isort (сортировка импортов)
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E402",  # импорт после кода — осознанный паттерн (sys.path-хаки, автономные скрипты)
+    "E501",  # line-too-long — кириллица в комментариях/докстрингах раздувает строки
+    "E741",  # ambiguous-variable-name — однобуквенные l/I/O в research-скриптах
+    "E702",  # multiple-statements-on-one-line-semicolon — компактные инициализации
+    "E731",  # lambda-assignment — локальные лямбды в research-коде
+    "F841",  # unused-variable — мёртвый код в скриптах (не баг, не маскирует)
+]

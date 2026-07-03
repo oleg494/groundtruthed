@@ -7,6 +7,7 @@ SDK, что доступен. Новый домен `invest-public-api.tbank.ru`
 по умолчанию, если не задана). Токен — боевой read-only (TINVEST_API_KEY).
 """
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -58,7 +59,7 @@ def main():
         # PortfolioResponse не имеет .currencies (это был баг старого кода, не
         # всплывавший: SDK не был установлен). Кэш — в total_amount_currencies;
         # отдельные валютные позиции лежат в positions с instrument_type=='currency'.
-        print(f"\n=== ВАЛЮТЫ (кэш) ===")
+        print("\n=== ВАЛЮТЫ (кэш) ===")
         print(f"  всего: {portfolio.total_amount_currencies}")
         for pos in portfolio.positions:
             if pos.instrument_type == "currency":

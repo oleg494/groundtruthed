@@ -106,8 +106,9 @@ python -m backtest <cmd>                 # бэктестер: run/optimize/walk
 - НКД не линеен (заморозка на выходных, T+1); ГО фьючерса ≠ нотионал×dlongClient (брать GetFuturesMargin);
 - Инвесткопилка — внебиржевой `TMON OTC` без свечей; `volumeBuy+volumeSell≠volume` в аукционные дни.
 
-Ключевая ставка ЦБ — **14.25%** (снижена 2026-06-19). Константа `KEYRATE` живёт в ДВУХ местах:
-`scripts/market_context.py` и `scripts/dashboard.py` — менять синхронно.
+Ключевая ставка ЦБ — **14.25%** (снижена 2026-06-19). Константа `KEYRATE` живёт в ТРЁХ местах:
+`scripts/market_context.py`, `scripts/dashboard.py`, `scripts/carry_rotation_model.py` (значение 14.25
+также в `analysis/botdev_absmom_switch_run.py:33` как `RATE`) — менять синхронно.
 
 ## Бэктестер (`backtest/`)
 
@@ -118,11 +119,19 @@ python -m backtest <cmd>                 # бэктестер: run/optimize/walk
 Sharpe (Bailey & López de Prado), бенчмарк-сравнение, `study` — end-to-end с автоматическим
 вердиктом. Документация — `backtest/README.md`.
 
-**Известные баги движка** (вскрыты CI-аудитом 2026-07-02, `tests/test_audit.py` — 3 честных
-xfail, `analysis/engine_audit_result.md`): (1) Broker не проверяет достаточность средств —
-кэш может уйти в минус; (2) нет maintenance margin/margin call фьючерсов — просадки занижены;
-(3) equity теряет стоимость позиции при дыре в мульти-тикерной ленте. Не чинить молча —
-снять xfail после фикса и перепроверить вердикты мульти-тикерных кандидатов.
+**Баги движка, вскрытые CI-аудитом 2026-07-02 — исправлены тем же днём** (`backtest/core.py`,
+`analysis/engine_audit_result.md`, 160 тестов зелёные, 0 xfail): (1) `Broker` теперь отклоняет
+заявку, если не хватает средств/маржи (`_has_sufficient_capital`, `Order.status = REJECTED`);
+(2) фьючерсы принудительно закрываются margin call'ом при нехватке ГО (`_check_margin_calls`),
+до отрицательного equity дело не доходит; (3) `equity()` оценивает позицию по последней
+известной цене при дыре в ленте (`_price_for`), не роняет её из расчёта. Побочно вскрыт
+(НЕ этим фиксом — воспроизведён и на старом коде) баг: `absmom_switch` и `trend_ls_stocks`
+расходились с независимой переигровкой equity в `backtest_validate.py` — расследован и
+исправлен (коммиты `1f428cf` + `fb1c52f`): root cause — баг replay-оракула, не движка;
+стратегии правят `Broker.cash` в обход Order-конвейера (капитализация кэша / плата за шорт),
+а оракул не учитывал эти правки. Добавлен канал `Broker.adjust_cash` / `Result.cash_adjustments`,
+replay теперь суммирует правки поточечно — 27/27 стратегий PASS до ~1e-10
+(`analysis/backtest_validate_divergence_result.md`).
 
 - Данные: детерминированная синтетика (GBM/trend/OU/sine) + реальные свечи через sandbox-домен
   с диск-кэшем `backtest/.cache/` (ключуется датой, автоочистки нет).

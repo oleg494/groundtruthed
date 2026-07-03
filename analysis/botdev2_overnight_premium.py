@@ -31,13 +31,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import candles, strategies                     # noqa: E402
-from backtest.core import Bar, Instrument                    # noqa: E402
-from backtest.engine import run                              # noqa: E402
-from backtest.metrics import metrics                         # noqa: E402
-from backtest.optimize import grid_search, walk_forward      # noqa: E402
-from backtest.robust import assess                           # noqa: E402
-from lab.instruments import INSTRUMENTS                      # noqa: E402
+from backtest import candles, strategies  # noqa: E402
+from backtest.core import Bar, Instrument  # noqa: E402
+from backtest.engine import run  # noqa: E402
+from backtest.metrics import metrics  # noqa: E402
+from backtest.optimize import grid_search, walk_forward  # noqa: E402
+from backtest.robust import assess  # noqa: E402
+from lab.instruments import INSTRUMENTS  # noqa: E402
 
 DAYS = 365
 CASH = 100_000.0
@@ -176,7 +176,7 @@ def measure(data: dict[str, list[Bar]]):
     print(f"  pooled intraday  : n={n}  mean {mu*1e4:+.2f} bp/день  t={t:+.2f}")
     n_c, mu_c, sd_c, t_c = tstat(pooled_cap)
     print(f"  pooled захватываемая (open→open): n={n_c}  mean {mu_c*1e4:+.2f} bp/ночь  t={t_c:+.2f}")
-    print(f"  барьер издержек: минимум 10 bp/круг (комиссия), стандарт 20 bp (плюс слиппедж)")
+    print("  барьер издержек: минимум 10 bp/круг (комиссия), стандарт 20 bp (плюс слиппедж)")
     print(f"  часы баров (SBER): {rows['SBER']['hours']}\n")
     return rows, (mu_c, t_c)
 

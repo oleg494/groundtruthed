@@ -41,7 +41,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import candles                                        # noqa: E402
+from backtest import candles  # noqa: E402
 from backtest.indicators import adx, donchian, hurst, sma, stdev, zscore  # noqa: E402
 
 OUT = Path(__file__).resolve().parent / "regime_conditional_returns.json"
@@ -249,7 +249,7 @@ def crosscheck_timeline(reg_shares: dict) -> None:
         print("\n(regime_timeline.json нет — сверка долей пропущена)")
         return
     t = json.loads(TIMELINE_JSON.read_text(encoding="utf-8"))
-    print(f"\nСверка долей режимов с regime_timeline.json (их % / наш %, Δ):")
+    print("\nСверка долей режимов с regime_timeline.json (их % / наш %, Δ):")
     worst = 0.0
     for tk, mine in reg_shares.items():
         theirs = t.get("summary", {}).get(tk, {}).get("shares_pct")

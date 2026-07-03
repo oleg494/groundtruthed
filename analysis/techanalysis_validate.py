@@ -16,9 +16,8 @@ READ-ONLY: только GetCandles + GetTechAnalysis.
 """
 import json
 import time
-import urllib.request
 import urllib.error
-from datetime import datetime, timezone
+import urllib.request
 from pathlib import Path
 
 BASE = "https://invest-public-api.tinkoff.ru/rest"

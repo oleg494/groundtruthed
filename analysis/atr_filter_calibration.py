@@ -25,8 +25,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest.candles import from_tinvest          # noqa: E402
-from lab.instruments import INSTRUMENTS            # noqa: E402
+from backtest.candles import from_tinvest  # noqa: E402
+from lab.instruments import INSTRUMENTS  # noqa: E402
 
 G, R, Y, X, BOLD, DIM = "\033[32m", "\033[31m", "\033[33m", "\033[0m", "\033[1m", "\033[2m"
 MSK = timezone(timedelta(hours=3))

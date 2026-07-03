@@ -1,9 +1,8 @@
 """Тесты сравнения с бенчмарком (R6)."""
 import math
 
-from backtest import candles, strategies
+from backtest import benchmark, candles, strategies
 from backtest.engine import run
-from backtest import benchmark
 
 
 def test_self_comparison_is_identity():

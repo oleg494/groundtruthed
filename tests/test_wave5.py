@@ -1,7 +1,7 @@
 """Тесты волны 5: ансамбли стратегий и сценарный анализ по множеству миров."""
 import math
 
-from backtest import candles, strategies, ensemble, scenarios
+from backtest import candles, ensemble, scenarios, strategies
 from backtest.engine import Result, run
 from backtest.metrics import metrics
 

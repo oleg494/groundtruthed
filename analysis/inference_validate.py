@@ -26,12 +26,11 @@ from statistics import NormalDist
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backtest.robust import (probabilistic_sharpe, expected_max_sharpe,
-                             deflated_sharpe)
-from backtest.validate import detect_lookahead
 from backtest import candles
-from backtest.engine import Strategy, Context
+from backtest.engine import Context, Strategy
+from backtest.robust import deflated_sharpe, expected_max_sharpe, probabilistic_sharpe
 from backtest.strategies import SMACross
+from backtest.validate import detect_lookahead
 
 _N = NormalDist()
 
@@ -165,10 +164,10 @@ def part3(M=2000, n=252, T=50, seed=3):
     print(f"    expected_max_sharpe(T={T}): формула={pred:.3f}  симуляция={sim:.3f}  "
           f"-> {'PASS' if ems_ok else 'FAIL'}")
     if asused_degenerate:
-        print(f"    !! НАХОДКА: DSR в том виде, как его зовёт assess() (sr_std=1.0 по умолчанию),")
-        print(f"       хоронит ДАЖE реальный скилл -> флаг verdict() 'Deflated SR<50%' срабатывает")
-        print(f"       почти всегда. Фикс: assess() должен передавать sr_std = std(per-bar SR")
-        print(f"       по точкам сетки). Стройблоки (PSR, expected_max_sharpe) корректны.")
+        print("    !! НАХОДКА: DSR в том виде, как его зовёт assess() (sr_std=1.0 по умолчанию),")
+        print("       хоронит ДАЖE реальный скилл -> флаг verdict() 'Deflated SR<50%' срабатывает")
+        print("       почти всегда. Фикс: assess() должен передавать sr_std = std(per-bar SR")
+        print("       по точкам сетки). Стройблоки (PSR, expected_max_sharpe) корректны.")
     return trap_ok and corr_lowfp and corr_power and asused_degenerate and ems_ok
 
 
@@ -216,9 +215,9 @@ def part4(seed=4):
 # ───────── [5] фикс assess(): DSR теперь различает шум и реальный эдж ─────────
 def part5(K=15):
     print("\n[5] ПРОВЕРКА ФИКСА assess(): DSR на реальном пути (сетка → robust.assess)")
-    from backtest.robust import assess, _bar_sharpe, deflated_sharpe
-    from backtest.optimize import grid_search
     from backtest import strategies
+    from backtest.optimize import grid_search
+    from backtest.robust import _bar_sharpe, assess, deflated_sharpe
     grid = {"fast": [5, 10, 20], "slow": [30, 50, 80]}
     noise_dsr, trend_dsr, trend_old_dsr = [], [], []
     for s in range(K):

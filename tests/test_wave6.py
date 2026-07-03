@@ -1,7 +1,7 @@
 """Тесты волны 6: кастомная цель оптимизации, walk-forward HTML, корреляции рукавов."""
 import math
 
-from backtest import candles, strategies, ensemble
+from backtest import candles, ensemble, strategies
 from backtest.engine import Result, run
 from backtest.optimize import grid_search, walk_forward
 from backtest.report import walkforward_html

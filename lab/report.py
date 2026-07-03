@@ -3,6 +3,7 @@
     python3 -m lab.report
 """
 from datetime import datetime
+
 from .journal import conn
 from .strategies import ACTIVE
 

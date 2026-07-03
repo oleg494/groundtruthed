@@ -24,8 +24,8 @@
 """
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 from pathlib import Path
@@ -502,9 +502,9 @@ def main():
               f"{cost:7.2f} ₽ (2x{comm_rate*100:.3f}% + полспреда "
               f"{hs_rub if hs is not None else '—'}) | ЧИСТЫЙ эффект сейчас {net:+.2f} ₽")
         if ldv_reset:
-            print(f"    ВНИМАНИЕ: лот(ы) держатся >=2.5 лет — продажа обнулит таймер ЛДВ; "
-                  f"фиксировать убыток, только если экономия существенно больше "
-                  f"потенциала льготы при восстановлении цены")
+            print("    ВНИМАНИЕ: лот(ы) держатся >=2.5 лет — продажа обнулит таймер ЛДВ; "
+                  "фиксировать убыток, только если экономия существенно больше "
+                  "потенциала льготы при восстановлении цены")
         if usable < loss:
             print(f"    остаток убытка {loss-usable:,.2f} ₽ сальдируется с прибылью до конца "
                   f"года или переносится до 10 лет (3-НДФЛ); потенциал {loss*rate:,.2f} ₽")

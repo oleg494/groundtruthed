@@ -7,10 +7,10 @@ READ-ONLY: только get/list-методы T-Invest REST. Никаких за
 Деньги приходят как {units,nano} или {value} — парсим через to_f().
 """
 import json
-import time
 import sys
-import urllib.request
+import time
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 BASE = "https://invest-public-api.tinkoff.ru/rest"

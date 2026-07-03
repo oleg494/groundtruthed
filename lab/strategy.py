@@ -7,8 +7,9 @@ v3: мульти-инструмент, лонг и шорт. Цены в ctx.pri
 """
 import time
 import uuid
-from .api import call, to_f, quot
-from .instruments import INSTRUMENTS, rub_value
+
+from .api import call, quot, to_f
+from .instruments import INSTRUMENTS
 
 
 class Ctx:

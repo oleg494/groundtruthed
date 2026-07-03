@@ -1,9 +1,10 @@
 """Тесты движка: тайминг исполнения, комиссия, слиппедж, шорты, усреднение, сайзинг."""
 import math
 
+from conftest import bars_from_ohlc
+
 from backtest.core import Instrument
 from backtest.engine import Strategy, run
-from conftest import bars_from_ohlc
 
 
 # ── скриптовые стратегии для точного контроля ──

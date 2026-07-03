@@ -8,8 +8,8 @@
 """
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from collections import defaultdict
 from pathlib import Path
 

@@ -1,9 +1,10 @@
 """Тесты opt-in маржинальной модели фьючерса (kind='futures')."""
 import math
 
-from backtest.core import Bar, Broker, Instrument, Order, MARKET
-from backtest.engine import Strategy, run
 from conftest import bars_from_ohlc
+
+from backtest.core import MARKET, Bar, Broker, Instrument, Order
+from backtest.engine import Strategy, run
 
 
 def test_futures_cash_not_reduced_by_notional():
@@ -31,13 +32,26 @@ def test_futures_realized_credited_to_cash_on_close():
 
 
 def test_futures_can_hold_beyond_cash():
-    # нотионал 1000 при кэше 300 — для фьючерса это норм (кэш не тратится на нотионал)
+    # нотионал 1000 при кэше 150 — для фьючерса это норм: кэш не тратится на нотионал,
+    # тратится/блокируется только ГО = margin_rate·нотионал (здесь 10% от 1000 = 100 ≤ 150)
+    inst = {"F": Instrument("F", multiplier=10.0, kind="futures", margin_rate=0.1)}
+    b = Broker(150.0, inst, commission=0.0, slippage=0.0)
+    b.submit(Order("F", 1, MARKET), 0)
+    b.process(0, {"F": Bar(0, 100, 100, 100, 100)})
+    assert b.position("F") == 1
+    assert math.isclose(b.cash, 150.0)
+
+
+def test_futures_rejected_when_margin_exceeds_cash():
+    # то же самое, но ГО (100% нотионала при дефолтном margin_rate) кэша 300 не хватает —
+    # брокер обязан отклонить заявку (баг №1 из analysis/engine_audit_result.md)
     inst = {"F": Instrument("F", multiplier=10.0, kind="futures")}
     b = Broker(300.0, inst, commission=0.0, slippage=0.0)
     b.submit(Order("F", 1, MARKET), 0)
     b.process(0, {"F": Bar(0, 100, 100, 100, 100)})
-    assert b.position("F") == 1
+    assert b.position("F") == 0
     assert math.isclose(b.cash, 300.0)
+    assert len(b.rejected) == 1
 
 
 class _RoundTrip(Strategy):

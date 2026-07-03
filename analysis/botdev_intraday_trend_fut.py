@@ -16,14 +16,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from backtest.core import Instrument                # noqa: E402
-from backtest.engine import run                     # noqa: E402
-from backtest.metrics import metrics                # noqa: E402
-from backtest import candles                        # noqa: E402
-from backtest.strategies import REGISTRY, build     # noqa: E402
+from backtest import candles  # noqa: E402
+from backtest.core import Instrument  # noqa: E402
+from backtest.engine import run  # noqa: E402
+from backtest.metrics import metrics  # noqa: E402
 from backtest.optimize import grid_search, walk_forward  # noqa: E402
-from backtest.robust import assess                  # noqa: E402
-from lab.instruments import INSTRUMENTS             # noqa: E402
+from backtest.robust import assess  # noqa: E402
+from backtest.strategies import REGISTRY, build  # noqa: E402
+from lab.instruments import INSTRUMENTS  # noqa: E402
 
 CASH = 100_000.0
 COMMISSION = 0.0005

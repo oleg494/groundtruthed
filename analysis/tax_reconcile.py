@@ -20,8 +20,8 @@ from __future__ import annotations
 
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 from pathlib import Path
@@ -186,21 +186,21 @@ def analyze(acc: str):
     net_base = tot_broker - tot_comm                     # финрезультат за вычетом комиссий
     implied = 0.13 * max(net_base, 0)
     eff_rate = net_tax / net_base if net_base > 0 else 0.0
-    print(f"\n[B] НДФЛ (база = gross финрез − комиссии; ставка 13%)")
+    print("\n[B] НДФЛ (база = gross финрез − комиссии; ставка 13%)")
     print(f"    gross финрез={tot_broker:+.2f}  − комиссии={tot_comm:.2f}  = чистая база {net_base:+.2f} ₽")
     print(f"    13% от чистой базы (ожид. налог) = {implied:.2f} ₽")
     print(f"    фактически удержано (TAX − коррекции) = {net_tax:.2f} ₽   "
           f"эфф.ставка={eff_rate*100:.1f}%")
 
     # ── [C] ЛДВ: проданные лоты + прогноз по текущим позициям ──
-    print(f"\n[C] ЛДВ (льгота за непрерывное владение ≥3 года, обращ. бумаги)")
+    print("\n[C] ЛДВ (льгота за непрерывное владение ≥3 года, обращ. бумаги)")
     max_held = max((r["avg_held_days"] for r in sell_rows), default=0.0)
     qualified = [r for r in sell_rows if r["avg_held_days"] >= 3 * 365]
     print(f"    проданные лоты: макс. срок владения {max_held:.0f} дн ({max_held/365:.2f} г); "
           f"с правом на ЛДВ (≥3 г): {len(qualified)} -> "
           f"{'льгота была применима' if qualified else 'льготы не было (счёт молод)'}")
     if open_lots:
-        print(f"    текущие позиции — когда дозреют до ЛДВ:")
+        print("    текущие позиции — когда дозреют до ЛДВ:")
         for isin, lts in open_lots.items():
             tick = per_isin[isin]["ticker"]
             oldest = min(dt(l[2]) for l in lts)

@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
 
-from .core import Bar, Broker, Instrument, Order, Trade, MARKET, LIMIT
+from .core import LIMIT, MARKET, Bar, Broker, Instrument, Order, Trade
 
 
 # ───────────────────────── контекст ─────────────────────────
@@ -76,6 +76,13 @@ class Context:
 
     def position(self, ticker: str) -> float:
         return self._b.position(ticker)
+
+    def adjust_cash(self, delta: float, reason: str = "") -> None:
+        """Публичный канал для прямых правок кэша (капитализация свободного кэша,
+        плата за шорт-заимствование и т.п.) — в обход Order/fill, но с логом в
+        Result.cash_adjustments, чтобы внешние оракулы могли переиграть равновесие.
+        Использовать вместо прямой записи в ctx._b.cash."""
+        self._b.adjust_cash(self.i, delta, reason)
 
     def tickers(self) -> list[str]:
         return list(self._inst)
@@ -224,6 +231,7 @@ class Result:
     fills: list[Order]
     exposure: list[float] = field(default_factory=list)
     commissions_paid: float = 0.0
+    cash_adjustments: list[tuple[int, float, str]] = field(default_factory=list)
     data_tickers: list[str] = field(default_factory=list)
     bars: int = 0
 
@@ -277,4 +285,5 @@ def run(strategy: Strategy, data: dict[str, list[Bar]], cash: float = 100_000.0,
         times=times, equity=equity, cash0=cash,
         trades=list(broker.trades), fills=list(broker.fills),
         exposure=exposure, commissions_paid=broker.commissions_paid,
+        cash_adjustments=list(broker.cash_adjustments),
         data_tickers=list(data), bars=len(times))

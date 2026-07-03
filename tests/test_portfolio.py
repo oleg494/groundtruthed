@@ -1,5 +1,6 @@
 """Тесты портфельного ребаланса (R4)."""
-from backtest import candles, portfolio as pf
+from backtest import candles
+from backtest import portfolio as pf
 from backtest.engine import run
 from backtest.metrics import metrics
 

@@ -6,10 +6,8 @@
 """
 from __future__ import annotations
 
-from typing import Optional
-
-from .engine import Strategy, Context
 from . import indicators as ta
+from .engine import Context, Strategy
 
 
 class RebalancePortfolio(Strategy):

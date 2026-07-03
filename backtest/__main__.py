@@ -16,23 +16,20 @@ import argparse
 import sys
 from pathlib import Path
 
-from . import candles, strategies
-from .engine import run, Result
-from .metrics import metrics
-from .report import text_report, html_report, compare_report
-from .optimize import grid_search, walk_forward, cost_sensitivity
-from .montecarlo import bootstrap_trades, bootstrap_returns
-from .report import tearsheet_html, heatmap_html, walkforward_html
-from . import robust as robust_mod
 from . import benchmark as bench_mod
-from . import export as export_mod
-from .analytics import trade_analytics
-from .study import run_study, text_study
-from .report import study_html
-from . import risk as risk_mod
-from . import ensemble as ensemble_mod
-from . import scenarios as scenarios_mod
+from . import candles, strategies
 from . import dashboard as dashboard_mod
+from . import ensemble as ensemble_mod
+from . import export as export_mod
+from . import risk as risk_mod
+from . import robust as robust_mod
+from . import scenarios as scenarios_mod
+from .engine import run
+from .metrics import metrics
+from .montecarlo import bootstrap_returns, bootstrap_trades
+from .optimize import cost_sensitivity, grid_search, walk_forward
+from .report import compare_report, heatmap_html, html_report, study_html, tearsheet_html, text_report, walkforward_html
+from .study import run_study, text_study
 
 # несколько UID ликвидных бумаг MOEX для удобства (значения скопированы, не импорт из lab/)
 PRESETS = {

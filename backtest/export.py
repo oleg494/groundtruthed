@@ -10,9 +10,9 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .analytics import trade_analytics
 from .engine import Result
 from .metrics import metrics
-from .analytics import trade_analytics
 
 
 def _iso(t: int) -> str:

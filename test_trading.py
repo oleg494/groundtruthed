@@ -11,9 +11,9 @@
 import unittest
 from unittest import mock
 
-from lab.strategy import Ctx
-from lab.strategies import Grid
 import daybot.run as dr
+from lab.strategies import Grid
+from lab.strategy import Ctx
 
 
 class StubJournal:

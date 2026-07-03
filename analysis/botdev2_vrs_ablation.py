@@ -15,10 +15,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import strategies                              # noqa: E402
-from backtest.engine import run, Context                     # noqa: E402
-from analysis.botdev2_vol_regime_switch import (             # noqa: E402
-    fetch, wfa_warm, GRID, N_SPLITS, CASH, COMMISSION, SLIPPAGE)
+from analysis.botdev2_vol_regime_switch import CASH, COMMISSION, GRID, N_SPLITS, SLIPPAGE, fetch, wfa_warm  # noqa: E402
+from backtest import strategies  # noqa: E402
+from backtest.engine import Context, run  # noqa: E402
 
 
 class VRSWithCashRate(strategies.VolRegimeSwitch):

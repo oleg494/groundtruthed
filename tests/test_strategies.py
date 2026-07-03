@@ -1,10 +1,9 @@
 """Тесты стратегий и MC: детерминизм, воспроизводимость, осмысленность сигналов."""
-import math
 
 from backtest import candles, strategies
 from backtest.engine import run
 from backtest.metrics import metrics
-from backtest.montecarlo import bootstrap_trades, bootstrap_returns
+from backtest.montecarlo import bootstrap_returns, bootstrap_trades
 from backtest.optimize import grid_search, walk_forward
 
 

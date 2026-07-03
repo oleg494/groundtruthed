@@ -1,8 +1,8 @@
 """Strategy Lab: общий REST-слой песочницы. ТОЛЬКО sandbox-домен и sandbox-токен."""
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 BASE = "https://sandbox-invest-public-api.tinkoff.ru/rest"

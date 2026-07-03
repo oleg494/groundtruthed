@@ -14,8 +14,8 @@ READ-ONLY.
 """
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -119,7 +119,7 @@ def main():
 
     print(f"\n{BOLD}2) Сверка yieldValue == 100·dividendNet/closePrice{X}")
     print(f"  совпало {yield_match}/{yield_tot} — НЕ тождество: yieldValue зафиксирован на дату")
-    print(f"  расчёта (createdAt) по тогдашней цене, а closePrice — снимок с другой даты.")
+    print("  расчёта (createdAt) по тогдашней цене, а closePrice — снимок с другой даты.")
     print(f"  {DIM}→ грабля: не считать дивдоходность как net/closePrice из этого ответа;")
     print(f"     эти поля из разных моментов времени.{X}")
 

@@ -15,10 +15,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from backtest.core import Bar, Instrument               # noqa: E402
-from backtest.engine import run                          # noqa: E402
-from backtest.metrics import metrics                     # noqa: E402
-from backtest.strategies import build                    # noqa: E402
+from backtest.core import Bar, Instrument  # noqa: E402
+from backtest.engine import run  # noqa: E402
+from backtest.metrics import metrics  # noqa: E402
+from backtest.strategies import build  # noqa: E402
 
 MSK = 3 * 3600
 BARS_PER_DAY = 26          # 10:00..23:00 МСК по 30 минут

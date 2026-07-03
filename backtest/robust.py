@@ -12,8 +12,6 @@ import math
 from dataclasses import dataclass
 from statistics import NormalDist
 
-from .metrics import metrics
-
 _N = NormalDist()
 _EULER = 0.5772156649015329
 

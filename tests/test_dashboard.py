@@ -1,11 +1,8 @@
 """Тесты backtest/dashboard.py."""
-import json
-import math
-import tempfile
 from pathlib import Path
 
-from backtest.dashboard import load_results, build_dashboard, save_dashboard
-from backtest import candles, strategies, run, metrics
+from backtest import candles, run, strategies
+from backtest.dashboard import build_dashboard, load_results, save_dashboard
 from backtest.export import to_json
 
 

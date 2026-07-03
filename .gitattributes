@@ -1,0 +1,5 @@
+# Нормализация концов строк: текстовые файлы в LF (кросс-платформа),
+# Windows-скрипты (.bat/.vbs) принудительно в CRLF — этого требует Windows.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.vbs text eol=crlf

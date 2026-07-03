@@ -16,10 +16,10 @@ CLI:
     python -m backtest demo
     python -m backtest run --strategy sma_cross --synthetic gbm:750:1
 """
-from .core import Bar, Instrument, Order, Broker  # noqa: F401
-from .engine import Strategy, Context, run, Result  # noqa: F401
-from .metrics import metrics, Metrics  # noqa: F401
-from .report import text_report, html_report  # noqa: F401
+from .core import Bar, Broker, Instrument, Order  # noqa: F401
+from .engine import Context, Result, Strategy, run  # noqa: F401
+from .metrics import Metrics, metrics  # noqa: F401
+from .report import html_report, text_report  # noqa: F401
 
 __all__ = [
     "Bar", "Instrument", "Order", "Broker",

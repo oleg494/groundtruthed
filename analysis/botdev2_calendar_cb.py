@@ -17,19 +17,17 @@ Read-only: только кэш backtest/.cache (sandbox-домен). Заяво�
 from __future__ import annotations
 
 import datetime as dt
-import math
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import candles, strategies                     # noqa: E402
-from backtest.core import Instrument                          # noqa: E402
-from backtest.engine import run                               # noqa: E402
-from backtest.metrics import metrics                          # noqa: E402
-from backtest.optimize import grid_search                     # noqa: E402
-from backtest.robust import assess                            # noqa: E402
+from backtest import candles, strategies  # noqa: E402
+from backtest.core import Instrument  # noqa: E402
+from backtest.engine import run  # noqa: E402
+from backtest.optimize import grid_search  # noqa: E402
+from backtest.robust import assess  # noqa: E402
 
 # календарь плановых заседаний ЦБ (проверен по cbr.ru/dkp/cal_mp 2026-07-02;
 # внеочередные 28.02/08.04/26.05.2022 и 15.08.2023 исключены — не антиципируемы)

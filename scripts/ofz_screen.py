@@ -6,8 +6,8 @@ READ-ONLY: Bonds / GetBondCoupons / GetLastPrices. YTM считаем сами (
 """
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 

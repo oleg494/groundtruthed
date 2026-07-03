@@ -25,11 +25,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backtest import candles, run, metrics
+from backtest import candles, metrics, run
 from backtest.core import Bar
 from backtest.optimize import grid_search
-from backtest.robust import deflated_sharpe, probabilistic_sharpe, _bar_sharpe
-from backtest.strategies import PairsZScoreBasket, BuyHold, RandomTrader
+from backtest.robust import _bar_sharpe, deflated_sharpe, probabilistic_sharpe
+from backtest.strategies import BuyHold, PairsZScoreBasket, RandomTrader
 
 UIDS = {
     "SBER": "e6123145-9665-43e0-8413-cd61b8aa9b13",

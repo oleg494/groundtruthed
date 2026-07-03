@@ -6,8 +6,9 @@ gold_trend (фьюч GLDRUBF, лонг-онли).
 """
 import random
 import time
-from .strategy import Strategy, Ctx, sma
-from .instruments import BASKET, INSTRUMENTS, rub_value
+
+from .instruments import BASKET, rub_value
+from .strategy import Ctx, Strategy, sma
 
 
 def hourly(ctx: Ctx) -> bool:

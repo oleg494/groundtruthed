@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backtest import candles                                  # noqa: E402
+from backtest import candles  # noqa: E402
 
 # ── календарь заседаний ЦБ РФ (проверен по cbr.ru/dkp/cal_mp, 2026-07-02) ──
 # 2026-06-19 — РЕГУЛЯРНОЕ из официального календаря (не внеочередное);

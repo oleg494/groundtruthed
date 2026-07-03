@@ -2,9 +2,17 @@
 
 Модель денег — кэш-модель «как для акций»: на покупку кэш уменьшается на нотионал
 плюс комиссию, на продажу — растёт. Equity = кэш + рыночная стоимость позиций.
-Маржинальную модель фьючерсов (где кэш не движется, а блокируется ГО) сознательно
-НЕ воспроизводим — для учебного движка кэш-модель проще и согласована с метриками;
-для фьючерса достаточно задать multiplier (рублей за 1.0 пункта на единицу).
+Для фьючерса кэш на нотионал не тратится (блокируется ГО = margin_rate·нотионал),
+кредитуется только реализованный P&L; для фьючерса достаточно задать multiplier
+(рублей за 1.0 пункта на единицу).
+
+Средства/маржа: заявка, увеличивающая экспозицию сверх свободных денег (акции —
+нотионал > cash; фьючерс — margin_rate·нотионал > cash минус уже занятое ГО),
+отклоняется брокером (Order.status = REJECTED, см. Broker.rejected). Закрытие и
+сокращение позиции не блокируются никогда. Если equity перестаёт покрывать ГО
+открытых фьючерсных позиций (просадка) — margin call: все фьючерсные позиции
+закрываются принудительно по close бара, прежде чем equity уйдёт в минус
+(см. analysis/engine_audit_result.md, баги №1 и №2).
 
 Антизаглядывание (no lookahead): сигнал считается по закрытию бара i, а исполняется
 на ОТКРЫТИИ бара i+1. Брокер не знает будущего — он обрабатывает отложенные ордера
@@ -54,7 +62,11 @@ class Instrument:
     lot: int = 1
     step: float = 0.01
     kind: str = "cash"            # "cash" (как акции) | "futures" (маржа/вармаржа)
-    margin_rate: float = 1.0      # доля нотионала под ГО (для futures; справочно/для exposure)
+    margin_rate: float = 1.0      # доля нотионала под ГО (для futures) — ЭНФОРСИТСЯ:
+                                   # инициальная маржа при входе и maintenance/margin call
+                                   # при просадке (Broker._has_sufficient_capital/_check_margin_calls).
+                                   # 1.0 = без плеча (безопасный дефолт); указывать реальный
+                                   # ГО% инструмента явно, если нужна реалистичная маржа.
 
     def notional(self, price: float, qty: float) -> float:
         return price * self.multiplier * qty
@@ -72,6 +84,7 @@ NEW = "new"
 FILLED = "filled"
 CANCELLED = "cancelled"
 EXPIRED = "expired"
+REJECTED = "rejected"          # брокер отклонил — не хватило средств/маржи (см. Broker._has_sufficient_capital)
 
 _oid = itertools.count(1)
 
@@ -139,8 +152,22 @@ class Broker:
         self.positions: dict[str, Position] = {t: Position() for t in instruments}
         self.pending: list[Order] = []
         self.fills: list[Order] = []
+        self.rejected: list[Order] = []   # заявки, отклонённые по недостатку средств/маржи
         self.trades: list[Trade] = []
         self.commissions_paid = 0.0
+        self._last_price: dict[str, float] = {}  # последняя известная цена тикера (для дыр в ленте)
+        # прямые (не через fill) правки кэша: начисление % на свободный кэш,
+        # плата за шорт-заимствование и т.п. — логируем (бар, дельта, причина),
+        # чтобы внешние переигровки (analysis/backtest_validate.py) могли их учесть.
+        self.cash_adjustments: list[tuple[int, float, str]] = []
+
+    def adjust_cash(self, i: int, delta: float, reason: str = "") -> None:
+        """Официальный канал для прямых правок кэша стратегией (в обход Order/fill,
+        например капитализация свободного кэша или плата за шорт-заимствование).
+        Логируется в cash_adjustments — единственная легитимная альтернатива
+        прямой записи в self.cash изнутри стратегии."""
+        self.cash += delta
+        self.cash_adjustments.append((i, delta, reason))
 
     # — приём заявок —
     def submit(self, order: Order, i: int) -> Order:
@@ -177,8 +204,83 @@ class Broker:
                 else:
                     still.append(o)
                 continue
+            if not self._has_sufficient_capital(o.ticker, fill, o.qty):
+                o.status = REJECTED           # не хватает средств/маржи — брокер отклоняет
+                self.rejected.append(o)
+                continue
             self._apply_fill(o, fill, i)
         self.pending = still
+        self._check_margin_calls(i, bars)
+
+    def _futures_margin_used(self) -> float:
+        """Суммарное ГО, уже занятое под текущие фьючерсные позиции (по средней цене)."""
+        total = 0.0
+        for t, p in self.positions.items():
+            if not p.qty:
+                continue
+            inst = self.instruments[t]
+            if inst.is_futures:
+                total += abs(p.qty) * p.avg * inst.multiplier * inst.margin_rate
+        return total
+
+    def _has_sufficient_capital(self, ticker: str, price: float, dqty: float) -> bool:
+        """Хватает ли средств/маржи на исполнение заявки. Закрытие/сокращение позиции
+        никогда не блокируется — риск не растёт, только уменьшается.
+
+        ponytail: при развороте через ноль (напр. +5 -> -3) закрывающая часть всегда
+        разрешена, а margin-проверка новой стороны здесь не выделяется отдельно —
+        редкий кейс, добавить прицельно, если понадобится."""
+        inst = self.instruments[ticker]
+        old_qty = self.positions[ticker].qty
+        new_qty = old_qty + dqty
+        if abs(new_qty) <= abs(old_qty):
+            return True
+        if inst.is_futures:
+            added = abs(new_qty) - abs(old_qty)
+            required = inst.notional(price, added) * inst.margin_rate
+            return required <= self.cash - self._futures_margin_used()
+        if dqty <= 0:
+            return True    # шорт/наращивание шорта в кэш-модели кредитует кэш, не тратит его
+        required = inst.notional(price, dqty)
+        return required <= self.cash
+
+    def _check_margin_calls(self, i: int, bars: dict[str, Bar]) -> None:
+        """Margin call: если equity счёта не покрывает ГО текущих фьючерсных позиций —
+        принудительно закрыть ВСЕ фьючерсные позиции по close бара (позиция не должна
+        пережить просадку до отрицательного equity, см. analysis/engine_audit_result.md)."""
+        required = 0.0
+        for t, p in self.positions.items():
+            if not p.qty:
+                continue
+            inst = self.instruments[t]
+            if not inst.is_futures:
+                continue
+            price = self._price_for(t, bars)
+            if price is None:
+                continue
+            required += abs(p.qty) * price * inst.multiplier * inst.margin_rate
+        if required == 0.0 or self.equity(bars) >= required:
+            return
+        for t, p in list(self.positions.items()):
+            if not p.qty:
+                continue
+            inst = self.instruments[t]
+            if not inst.is_futures:
+                continue
+            price = self._price_for(t, bars)
+            if price is None:
+                continue
+            close_order = Order(t, -p.qty, MARKET)
+            close_order.created_i = i
+            self._apply_fill(close_order, price, i)
+
+    def _price_for(self, ticker: str, bars: dict[str, Bar]) -> Optional[float]:
+        """Цена close тикера на этом баре, иначе последняя известная (дыра в ленте)."""
+        bar = bars.get(ticker)
+        if bar is not None:
+            self._last_price[ticker] = bar.c
+            return bar.c
+        return self._last_price.get(ticker)
 
     def _try_fill(self, o: Order, bar: Bar) -> Optional[float]:
         """Вернуть цену исполнения или None, если лимит не сработал на этом баре."""
@@ -257,15 +359,15 @@ class Broker:
         for t, p in self.positions.items():
             if not p.qty:
                 continue
-            bar = bars.get(t)
-            if bar is None:
+            price = self._price_for(t, bars)
+            if price is None:            # тикер ни разу не встречался — оценить нечем
                 continue
             inst = self.instruments[t]
             if inst.is_futures:
                 # фьючерс: кэш не платил нотионал → вносим только нереализованный P&L
-                eq += (bar.c - p.avg) * p.qty * inst.multiplier
+                eq += (price - p.avg) * p.qty * inst.multiplier
             else:
-                eq += inst.notional(bar.c, p.qty)   # акции: рыночная стоимость позиции
+                eq += inst.notional(price, p.qty)   # акции: рыночная стоимость позиции
         return eq
 
     def exposure(self, bars: dict[str, Bar]) -> float:

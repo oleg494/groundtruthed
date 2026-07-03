@@ -1,7 +1,7 @@
 """Тесты капстоун-пайплайна study (волна 3)."""
 from backtest import candles
-from backtest.study import run_study, text_study
 from backtest.report import study_html
+from backtest.study import run_study, text_study
 
 
 def _study():

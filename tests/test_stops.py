@@ -1,8 +1,9 @@
 """Тесты opt-in стоп-логики Context (R7)."""
 import math
 
-from backtest.engine import Strategy, run
 from conftest import bars_from_ohlc
+
+from backtest.engine import Strategy, run
 
 
 class StopLoss(Strategy):

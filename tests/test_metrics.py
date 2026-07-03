@@ -3,7 +3,7 @@ import math
 
 from backtest.core import Trade
 from backtest.engine import Result
-from backtest.metrics import metrics, _max_drawdown
+from backtest.metrics import _max_drawdown, metrics
 
 DAY = 86400
 
