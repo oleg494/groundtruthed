@@ -18,6 +18,7 @@ daybot/daybot.stop
 backtest/.cache/
 
 .pytest_cache/
+tmp/
 
 # analysis: генерируемые бэктестером отчёты (регенерируются командой)
 analysis/bt.json

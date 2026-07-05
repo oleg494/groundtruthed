@@ -3,3 +3,7 @@
 * text=auto eol=lf
 *.bat text eol=crlf
 *.vbs text eol=crlf
+
+# Generated research artifacts should not dominate GitHub language stats.
+analysis/*.html linguist-generated=true
+analysis/*_study.html linguist-generated=true

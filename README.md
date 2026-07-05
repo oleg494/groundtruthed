@@ -1,9 +1,11 @@
 # groundtruthed
 
-Аналитическое пространство вокруг брокерского счёта в Т-Инвестициях (T-Bank): анализ
-рынка и портфеля по **боевому read-only** токену плюс форвард-тест торговых стратегий в
-**песочнице** (виртуальные деньги, реальные котировки MOEX). Реальные сделки не
-совершаются — боевой доступ только на чтение.
+Oracle-verified MOEX/T-Invest research workspace: stdlib backtester, read-only analytics,
+and a sandbox strategy farm.
+
+Аналитическое пространство вокруг пользовательского read-only T-Invest API: анализ рынка
+и портфеля плюс форвард-тест торговых стратегий в **песочнице** (виртуальные деньги,
+реальные котировки MOEX). Реальные сделки не совершаются — боевой доступ только на чтение.
 
 > Не приложение, а рабочее пространство: код обслуживает анализ, результаты идут в `analysis/`.
 
@@ -49,13 +51,22 @@
 
 ## Быстрый старт
 
+Офлайн-проверка без токенов:
+
 ```bash
-cp .env.example .env          # вписать свои токены и account id
 pip install -r requirements.txt
 
-python scripts/explore.py            # проверка боевого подключения + обзор портфеля (read-only)
 python -m backtest demo --html demo.html   # демо бэктестера на синтетике
 python -m pytest tests/ -q           # офлайн-набор: 208 pytest, 0 xfail
+python -m analysis.strategy_preflight "opening range breakout on Brent futures"
+```
+
+Live/API-команды требуют свой `.env`:
+
+```bash
+cp .env.example .env          # вписать свои токены и account id
+
+python scripts/explore.py            # проверка боевого подключения + обзор портфеля (read-only)
 python analysis/run_all_validations.py     # прогон проверок-оракулов (--fast — без медленных)
 
 python -m lab.runner                 # ферма стратегий в песочнице (Ctrl+C — graceful stop)
