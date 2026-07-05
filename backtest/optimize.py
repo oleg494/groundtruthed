@@ -72,6 +72,51 @@ def _slice(data: dict[str, list[Bar]], t0: int, t1: int) -> dict[str, list[Bar]]
     return {tk: [b for b in bars if t0 <= b.t < t1] for tk, bars in data.items()}
 
 
+class _WarmupGate(Strategy):
+    """Пускает историю в Context до OOS, но блокирует торговые сигналы на warm-up."""
+
+    def __init__(self, inner: Strategy, live_from: int):
+        self.inner = inner
+        self.live_from = live_from
+        self.name = getattr(inner, "name", type(inner).__name__)
+
+    def params(self) -> dict:
+        return self.inner.params()
+
+    def on_start(self, ctx) -> None:
+        self.inner.on_start(ctx)
+
+    def on_bar(self, ctx) -> None:
+        if ctx.t >= self.live_from:
+            self.inner.on_bar(ctx)
+
+    def on_finish(self, ctx) -> None:
+        self.inner.on_finish(ctx)
+
+
+def _slice_with_warmup(data: dict[str, list[Bar]], times: list[int],
+                       oos_lo: int, oos_hi: int, warmup_bars: int) -> dict[str, list[Bar]]:
+    if warmup_bars <= 0:
+        return _slice(data, oos_lo, oos_hi)
+    try:
+        oos_pos = times.index(oos_lo)
+    except ValueError:
+        return _slice(data, oos_lo, oos_hi)
+    warm_lo = times[max(0, oos_pos - warmup_bars)]
+    return _slice(data, warm_lo, oos_hi)
+
+
+def _trim_result_from(res: Result, live_from: int) -> Result:
+    first = next((i for i, t in enumerate(res.times) if t >= live_from), len(res.times))
+    return Result(
+        strategy=res.strategy, params=res.params,
+        times=res.times[first:], equity=res.equity[first:], cash0=res.cash0,
+        trades=list(res.trades), fills=list(res.fills),
+        exposure=res.exposure[first:], commissions_paid=res.commissions_paid,
+        cash_adjustments=list(res.cash_adjustments),
+        data_tickers=list(res.data_tickers), bars=max(0, len(res.times) - first))
+
+
 @dataclass
 class WFWindow:
     is_range: tuple[int, int]
@@ -191,6 +236,7 @@ def walk_forward(strategy_cls: type[Strategy], data: dict[str, list[Bar]],
                  metric: str = "sharpe", cash: float = 100_000.0,
                  instruments: Optional[dict[str, Instrument]] = None,
                  objective: Optional[Callable] = None,
+                 warmup_bars: int = 0,
                  **run_kw) -> WalkForward:
     """Anchored walk-forward: IS расширяется, OOS — следующий нетронутый кусок.
 
@@ -213,14 +259,19 @@ def walk_forward(strategy_cls: type[Strategy], data: dict[str, list[Bar]],
         oos_lo, oos_hi = times[k * seg], (times[(k + 1) * seg] if (k + 1) * seg < n
                                           else times[-1] + 1)
         is_data = _slice(data, is_lo, is_hi)
-        oos_data = _slice(data, oos_lo, oos_hi)
+        oos_data = _slice_with_warmup(data, times, oos_lo, oos_hi, warmup_bars)
         pts = grid_search(strategy_cls, is_data, param_grid, metric=metric,
                           cash=cash, instruments=instruments, objective=objective, **run_kw)
         if not pts:
             continue
         best = pts[0]
-        oos_res = run(strategy_cls(**best.params), oos_data, cash=capital,
+        oos_strategy: Strategy = strategy_cls(**best.params)
+        if warmup_bars > 0:
+            oos_strategy = _WarmupGate(oos_strategy, oos_lo)
+        oos_res = run(oos_strategy, oos_data, cash=capital,
                       instruments=instruments, **run_kw)
+        if warmup_bars > 0:
+            oos_res = _trim_result_from(oos_res, oos_lo)
         oos_m = metrics(oos_res)
         # компаундинг: продолжаем сквозную кривую от текущего капитала
         for t, e in zip(oos_res.times, oos_res.equity):

@@ -55,7 +55,7 @@ pip install -r requirements.txt
 
 python scripts/explore.py            # проверка боевого подключения + обзор портфеля (read-only)
 python -m backtest demo --html demo.html   # демо бэктестера на синтетике
-python -m pytest tests/ -q           # тесты бэктестера (~155, 3 xfail = известные баги движка)
+python -m pytest tests/ -q           # офлайн-набор: 208 pytest, 0 xfail
 python analysis/run_all_validations.py     # прогон проверок-оракулов (--fast — без медленных)
 
 python -m lab.runner                 # ферма стратегий в песочнице (Ctrl+C — graceful stop)

@@ -16,14 +16,16 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+try:
+    from keyrate import CB_MEETINGS_2026, KEYRATE
+except ImportError:
+    from scripts.keyrate import CB_MEETINGS_2026, KEYRATE
+
 BASE = "https://invest-public-api.tinkoff.ru/rest"
 ROOT = Path(__file__).resolve().parent.parent
 HIST = ROOT / "analysis" / "market_context_history.json"
 
 G, R, Y, B, DIM, BOLD, X = "\033[32m", "\033[31m", "\033[33m", "\033[36m", "\033[2m", "\033[1m", "\033[0m"
-
-KEYRATE = 14.25  # ключевая ставка ЦБ (снижена 2026-06-19), обновлять при изменении; дубль в scripts/dashboard.py:95 — менять синхронно
-CB_MEETINGS_2026 = ["2026-07-25", "2026-09-12", "2026-10-24", "2026-12-19"]
 
 # IMOEX/RGBI/RUSFAR-индикативы УДАЛЕНЫ из API 2026-07 (см. docs/gotchas.md «Индексы/ставки
 # удалены»). Индекс заменён на фьючерс IMOEXF (перпетуал — резолвим по тикеру, т.к. фьючерс

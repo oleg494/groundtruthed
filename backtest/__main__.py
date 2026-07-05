@@ -165,7 +165,7 @@ def cmd_walkforward(args) -> None:
     grid = _parse_grid(args.grid)
     wf = walk_forward(cls, data, grid, n_splits=args.splits, metric=args.metric,
                       cash=args.cash, commission=args.commission, slippage=args.slippage,
-                      instruments=_instruments(args, data))
+                      instruments=_instruments(args, data), warmup_bars=args.warmup_bars)
     print(f"\n=== walk-forward {args.strategy}, {args.splits} окон, оптим. по {args.metric} ===\n")
     print(f"{'окно':>4}  {'IS '+args.metric:>10}  {'OOS ret%':>9}  {'OOS Sharpe':>10}  лучшие параметры")
     for i, w in enumerate(wf.windows):
@@ -380,6 +380,9 @@ def main(argv=None) -> None:
     p.add_argument("--grid", required=True)
     p.add_argument("--metric", default="sharpe")
     p.add_argument("--splits", type=int, default=4)
+    p.add_argument("--warmup-bars", type=int, default=0,
+                   help="сколько баров предыстории дать OOS-окну для прогрева индикаторов "
+                        "(сигналы на warm-up заблокированы)")
     p.add_argument("--html", help="путь для HTML walk-forward (сшитая OOS-кривая + окна)")
     _add_data_args(p)
     p.set_defaults(func=cmd_walkforward)

@@ -12,13 +12,18 @@ READ-ONLY. Без write-методов API.
 """
 from __future__ import annotations
 
+try:
+    from keyrate import KEYRATE
+except ImportError:
+    from scripts.keyrate import KEYRATE
+
 # ponytail: ANSI-цвета инлайном — в боевом нет scripts/common, каждый файл автономен
 G, R, Y, B, X, BOLD, DIM = ("\033[32m", "\033[31m", "\033[33m", "\033[34m",
                             "\033[0m", "\033[1m", "\033[2m")
 
 # ───────────────────────── константы ─────────────────────────
 
-KEY_RATE = 14.25  # текущая КС
+KEY_RATE = KEYRATE  # текущая КС
 
 # Сценарии стресса (приращения КС в б.п.)
 STRESS_SCENARIOS = {

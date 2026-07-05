@@ -13,6 +13,11 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+try:
+    from keyrate import KEYRATE
+except ImportError:
+    from scripts.keyrate import KEYRATE
+
 BASE = "https://invest-public-api.tinkoff.ru/rest"
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -25,13 +30,6 @@ G, R, Y, B, DIM, BOLD, X = (
 def col(pct: float) -> str:
     return G if pct > 0.05 else R if pct < -0.05 else Y
 
-
-
-def load_accounts():
-    for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
-        if line.startswith("TINVEST_ACCOUNTS="):
-            return [a.strip() for a in line.split("=", 1)[1].split(",") if a.strip()]
-    raise SystemExit("Set TINVEST_ACCOUNTS=id1,id2 in .env")
 
 def load_token() -> str:
     for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
@@ -98,8 +96,7 @@ BLUECHIPS = [
     ("NVTK", "0da66728-6c30-44c4-9264-df8fac2467ee"),
     ("MGNT", "ca845f68-6c43-44bc-b584-330d2a1e5eb7"),
 ]
-ACCOUNTS = load_accounts()
-KEYRATE = 14.25  # ключевая ставка ЦБ (снижена 2026-06-19); дубль в scripts/market_context.py:25 — менять синхронно
+ACCOUNTS = ["0000000000", "0000000001"]
 
 
 def mvals(uids):

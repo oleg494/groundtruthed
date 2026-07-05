@@ -2,8 +2,8 @@
 
 Три задачи, всё READ-ONLY (никаких заявок и корректировок):
   - reconcile: сверка журнала lab.db с фактом sandbox-счёта (позиции/заявки), dry-run отчёт;
-  - метрики live-vs-backtest: частота сделок, equity-статистика, tracking; слиппедж —
-    честная заглушка (в текущей схеме журнала нет цены исполнения, см. slippage());
+  - метрики live-vs-backtest: частота сделок, equity-статистика, tracking, слиппедж
+    по trades.fill_price, order fill-rate и partial-rate;
   - daily_report: текст дневного отчёта с алертами (просадка, тишина, серия ошибок).
 
     python -m lab.forward report            # офлайн, только lab.db
@@ -16,7 +16,7 @@ import statistics
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from .instruments import INSTRUMENTS
+from .instruments import INSTRUMENTS, futures_roll_warnings
 from .journal import DB, conn
 
 ROOT = Path(__file__).resolve().parent
@@ -148,22 +148,52 @@ def format_reconcile(rec: dict) -> str:
     return "\n".join(lines)
 
 
+def record_reconcile(c, rec: dict, ts: float | None = None) -> None:
+    """Сохранить краткую историю reconcile по стратегиям в таблицу reconciles."""
+    ts = ts or datetime.now().timestamp()
+    if rec.get("error"):
+        c.execute("INSERT INTO reconciles(ts,strategy,n_disc,detail) VALUES(?,?,?,?)",
+                  (ts, "", -1, rec["error"]))
+        c.commit()
+        return
+    for strategy, row in rec.get("strategies", {}).items():
+        disc = row.get("discrepancies", [])
+        c.execute("INSERT INTO reconciles(ts,strategy,n_disc,detail) VALUES(?,?,?,?)",
+                  (ts, strategy, len(disc), json.dumps(disc, ensure_ascii=False)[:1000]))
+    c.commit()
+
+
 # ── метрики live-vs-backtest ───────────────────────────────────────────────────
 
 def slippage(c, strategy: str) -> dict:
     """Фактический слиппедж: цена исполнения vs last на момент решения.
 
-    ЗАГЛУШКА (честная): в текущей схеме журнала посчитать НЕЛЬЗЯ —
-    trades.price для market-ордеров это last price на момент решения (Ctx.market
-    пишет ctx.prices[ticker]), а цены ИСПОЛНЕНИЯ в журнале нет вообще.
-    Что добавить в journal (см. analysis/forward_layer_notes.md):
-      - trades.fill_price REAL — из GetSandboxOrderState.averagePositionPrice
-        (опрос после отправки) или из OperationsService;
-      - trades.decision_price REAL — переименовать текущий price, чтобы не путать.
-    Тогда слиппедж = (fill_price − decision_price) * знак стороны."""
+    trades.price — decision price, fill_price — средняя цена исполнения. Возвращаем
+    adverse slippage: для buy это fill-price − decision-price, для sell наоборот.
+    Старые записи без fill_price честно дают unavailable."""
     n = c.execute("SELECT COUNT(*) FROM trades WHERE strategy=?", (strategy,)).fetchone()[0]
-    return {"available": False, "trades": n,
-            "reason": "в журнале нет цены исполнения (нужно поле trades.fill_price)"}
+    rows = c.execute("SELECT side,price,fill_price,lots FROM trades "
+                     "WHERE strategy=? AND fill_price IS NOT NULL AND price IS NOT NULL",
+                     (strategy,)).fetchall()
+    if not rows:
+        return {"available": False, "trades": n,
+                "reason": "в журнале нет цены исполнения (нужно поле trades.fill_price)"}
+    weighted_price, weighted_bps, weight = 0.0, 0.0, 0
+    for side, price, fill_price, lots in rows:
+        action = (side or "").split(":", 1)[0]
+        if action == "buy":
+            adverse = fill_price - price
+        elif action == "sell":
+            adverse = price - fill_price
+        else:
+            adverse = abs(fill_price - price)
+        w = max(int(lots or 0), 1)
+        weighted_price += adverse * w
+        weighted_bps += (adverse / price * 10_000 if price else 0.0) * w
+        weight += w
+    return {"available": True, "trades": len(rows), "total_trades": n,
+            "avg_adverse_price": weighted_price / weight,
+            "avg_adverse_bps": weighted_bps / weight}
 
 
 def trade_stats(c, strategy: str) -> dict:
@@ -177,6 +207,29 @@ def trade_stats(c, strategy: str) -> dict:
     age = c.execute("SELECT COUNT(*) FROM equity WHERE strategy=? AND ts>?",
                     (strategy, t1)).fetchone()[0]
     return {"trades": len(rows), "per_day": len(rows) / span_days, "last_trade_age_ticks": age}
+
+
+def order_stats(c, strategy: str) -> dict:
+    """Fill-rate по последнему lifecycle-статусу каждого order_id."""
+    try:
+        rows = c.execute("SELECT order_id,status FROM orders WHERE strategy=? ORDER BY ts",
+                         (strategy,)).fetchall()
+    except sqlite3.OperationalError:
+        return {"orders": 0}
+    latest = {}
+    for order_id, status in rows:
+        if order_id:
+            latest[order_id] = status or ""
+    if not latest:
+        return {"orders": 0}
+    counts = {}
+    for status in latest.values():
+        counts[status] = counts.get(status, 0) + 1
+    filled = counts.get("filled", 0)
+    partial = sum(n for status, n in counts.items() if "partial" in status.lower())
+    return {"orders": len(latest), "filled": filled,
+            "fill_rate": filled / len(latest), "partial": partial,
+            "partial_rate": partial / len(latest), "by_status": counts}
 
 
 def equity_stats(c, strategy: str) -> dict:
@@ -205,15 +258,34 @@ def equity_stats(c, strategy: str) -> dict:
 def tracking_vs_backtest(c, strategy: str, expected_daily_ret: float | None = None) -> dict:
     """Tracking live-кривой против ожидания из бэктеста.
 
-    Ожидание в журнале НЕ хранится — источника внутри lab.db нет (заглушка).
-    Что добавить: таблицу expectations(strategy, date, exp_ret) — заполнять из
-    `python -m backtest study` на том же периоде; тогда gap = live − expected по дням.
-    Пока: если ожидание передано параметром (доля в день, напр. 0.0004) — считаем
-    кумулятивный гэп против него, иначе честно возвращаем unavailable."""
+    Если expected_daily_ret передан вручную (доля в день, напр. 0.0004), используем
+    его для всех дней. Иначе читаем таблицу expectations(strategy,date,exp_ret), где
+    date — ISO-дата дневного close, exp_ret — ожидаемая дневная доходность."""
+    rows = c.execute("SELECT ts,total FROM equity WHERE strategy=? ORDER BY ts",
+                     (strategy,)).fetchall()
     st = equity_stats(c, strategy)
     if expected_daily_ret is None:
-        return {"available": False,
-                "reason": "нет источника ожиданий (нужна таблица expectations из backtest study)"}
+        if len(rows) < 2:
+            return {"available": False, "reason": "мало данных equity"}
+        daily = {}
+        for ts, total in rows:
+            daily[datetime.fromtimestamp(ts).date()] = total
+        dates = sorted(daily)
+        try:
+            exp = {r[0]: float(r[1]) for r in c.execute(
+                "SELECT date,exp_ret FROM expectations WHERE strategy=?", (strategy,))}
+        except sqlite3.OperationalError:
+            exp = {}
+        missing = [d.isoformat() for d in dates[1:] if d.isoformat() not in exp]
+        if missing:
+            return {"available": False,
+                    "reason": "нет ожиданий для дат: " + ", ".join(missing[:5])}
+        exp_factor = 1.0
+        for d in dates[1:]:
+            exp_factor *= 1 + exp[d.isoformat()]
+        exp_total = (exp_factor - 1) * 100
+        return {"available": True, "live_pct": st["return_pct"], "expected_pct": exp_total,
+                "gap_pp": st["return_pct"] - exp_total}
     if st.get("days", 0) < 2:
         return {"available": False, "reason": "мало данных equity"}
     exp_total = ((1 + expected_daily_ret) ** (st["days"] - 1) - 1) * 100
@@ -289,11 +361,34 @@ def daily_report(db=None, day: str | None = None, reconcile_result: dict | None 
                          f"текущая просадка {st['current_dd_pct']:.2f}%")
         ts_ = trade_stats(c, n)
         lines.append(f"  частота: {ts_['trades']} сделок всего, {ts_['per_day']:.2f}/день")
+        os_ = order_stats(c, n)
+        if os_.get("orders", 0):
+            status_bits = ", ".join(f"{k}={v}" for k, v in sorted(os_["by_status"].items()))
+            lines.append(f"  fill-rate: {os_['filled']}/{os_['orders']} "
+                         f"({os_['fill_rate']*100:.1f}%; {status_bits})")
+            if os_.get("partial"):
+                lines.append(f"  partial-rate: {os_['partial']}/{os_['orders']} "
+                             f"({os_['partial_rate']*100:.1f}%)")
+        tr = tracking_vs_backtest(c, n)
+        if tr.get("available"):
+            lines.append(f"  tracking: live {tr['live_pct']:+.2f}% vs expected "
+                         f"{tr['expected_pct']:+.2f}%, gap {tr['gap_pp']:+.2f} п.п.")
         sl = slippage(c, n)
         if not sl["available"]:
             lines.append(f"  слиппедж: н/д — {sl['reason']}")
+        else:
+            lines.append(f"  слиппедж: {sl['avg_adverse_price']:+.4f} цены "
+                         f"({sl['avg_adverse_bps']:+.2f} б.п., "
+                         f"{sl['trades']}/{sl['total_trades']} сделок с fill_price)")
         for a in check_alerts(c, n):
             lines.append(f"  !! АЛЕРТ: {a}")
+    roll = futures_roll_warnings()
+    if roll:
+        lines.append("\nrollover:")
+        for r in roll:
+            lines.append(f"  {r['status']} {r['ticker']}: last_trade {r['last_trade']}, "
+                         f"exp {r['exp']}, roll_to {r['roll_to']}, "
+                         f"days_to_last_trade={r['days_to_last_trade']}")
     # reconcile-статус
     if reconcile_result is None:
         lines.append("\nreconcile: не выполнялся (офлайн-режим; запустить: python -m lab.forward reconcile)")
@@ -302,6 +397,14 @@ def daily_report(db=None, day: str | None = None, reconcile_result: dict | None 
     else:
         n_disc = sum(len(r["discrepancies"]) for r in reconcile_result["strategies"].values())
         lines.append(f"\nreconcile: {'OK' if reconcile_result['ok'] else f'{n_disc} расхождений(я)!'}")
+    hist = c.execute("SELECT ts,strategy,n_disc FROM reconciles ORDER BY ts DESC LIMIT 5").fetchall()
+    if hist:
+        lines.append("\nистория reconcile:")
+        for ts, s, n_disc in hist:
+            if n_disc < 0:
+                lines.append(f"  {datetime.fromtimestamp(ts):%Y-%m-%d %H:%M} ошибка: {s or 'global'}")
+            else:
+                lines.append(f"  {datetime.fromtimestamp(ts):%Y-%m-%d %H:%M} [{s}] {n_disc} расхождений")
     # хвост событий за день
     ev = c.execute("SELECT ts,strategy,kind,detail FROM events WHERE ts>=? AND ts<? "
                    "ORDER BY ts DESC LIMIT 8", (t0, t1)).fetchall()
@@ -335,6 +438,7 @@ def main(argv=None):
     except RuntimeError as e:     # lab.api.call: сеть/HTTP после ретраев
         print(f"reconcile недоступен (сеть/API): {e}")
         return 1
+    record_reconcile(_conn(args.db), rec)
     print(format_reconcile(rec))
     return 0 if rec["ok"] else 2
 

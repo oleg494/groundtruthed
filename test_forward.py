@@ -9,6 +9,7 @@
 """
 import time
 import unittest
+from datetime import datetime, timedelta
 from unittest import mock
 
 from lab import forward
@@ -23,7 +24,7 @@ def make_db():
 
 
 def add_trade(c, strategy, side, price, lots, ts=None):
-    c.execute("INSERT INTO trades VALUES(?,?,?,?,?,?)",
+    c.execute("INSERT INTO trades(ts,strategy,side,price,lots,order_id) VALUES(?,?,?,?,?,?)",
               (ts or NOW, strategy, side, price, lots, "oid"))
 
 
@@ -72,6 +73,92 @@ class TestJournalPositions(unittest.TestCase):
         c = make_db()
         add_trade(c, "day", "sell:BMQ6", 70, 2)
         self.assertEqual(forward.journal_positions(c, "day"), {"BMQ6": -2})
+
+
+class TestJournalSchemaV2(unittest.TestCase):
+    def test_trade_optional_execution_fields_and_forward_tables(self):
+        from lab.journal import Journal
+
+        c = make_db()
+        trade_cols = {r[1] for r in c.execute("PRAGMA table_info(trades)")}
+        self.assertTrue({"fill_price", "commission", "status"} <= trade_cols)
+        tables = {r[0] for r in c.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'")}
+        self.assertTrue({"orders", "reconciles", "expectations"} <= tables)
+
+        j = Journal(":memory:")
+        j.trade("grid", "buy:SBER", 300.0, 1, order_id="oid",
+                fill_price=300.1, commission=0.18, status="filled")
+        row = j.c.execute("SELECT price,fill_price,commission,status FROM trades").fetchone()
+        self.assertEqual(row, (300.0, 300.1, 0.18, "filled"))
+
+    def test_order_helper_records_lifecycle_rows(self):
+        from lab.journal import Journal
+
+        j = Journal(":memory:")
+        j.order("grid", "oid1", "buy:SBER", 300.0, 1, "submitted")
+        j.order("grid", "oid1", "buy:SBER", 300.0, 1, "filled",
+                fill_price=300.2, commission=0.18, detail="lotsExecuted=1")
+
+        rows = j.c.execute("SELECT order_id,status,fill_price,commission,detail "
+                           "FROM orders ORDER BY ts").fetchall()
+        self.assertEqual(rows[0], ("oid1", "submitted", None, None, ""))
+        self.assertEqual(rows[1], ("oid1", "filled", 300.2, 0.18, "lotsExecuted=1"))
+
+
+class TestSlippage(unittest.TestCase):
+    def test_uses_fill_price_when_available(self):
+        c = make_db()
+        c.execute("INSERT INTO trades(ts,strategy,side,price,lots,order_id,fill_price,commission,status) "
+                  "VALUES(?,?,?,?,?,?,?,?,?)",
+                  (NOW, "grid", "buy:SBER", 300.0, 1, "b1", 300.3, 0.18, "filled"))
+        c.execute("INSERT INTO trades(ts,strategy,side,price,lots,order_id,fill_price,commission,status) "
+                  "VALUES(?,?,?,?,?,?,?,?,?)",
+                  (NOW, "grid", "sell:SBER", 301.0, 1, "s1", 300.8, 0.18, "filled"))
+
+        sl = forward.slippage(c, "grid")
+
+        self.assertTrue(sl["available"])
+        self.assertEqual(sl["trades"], 2)
+        self.assertAlmostEqual(sl["avg_adverse_price"], 0.25)
+        self.assertAlmostEqual(sl["avg_adverse_bps"], 8.32, places=2)
+
+
+class TestTrackingVsBacktest(unittest.TestCase):
+    def test_reads_expectations_table_when_no_manual_expected_return(self):
+        c = make_db()
+        d0 = datetime.fromtimestamp(NOW).replace(hour=12, minute=0, second=0, microsecond=0)
+        d1 = d0 + timedelta(days=1)
+        add_equity(c, "grid", 100_000, ts=d0.timestamp())
+        add_equity(c, "grid", 103_000, ts=d1.timestamp())
+        c.execute("INSERT INTO expectations(strategy,date,exp_ret) VALUES(?,?,?)",
+                  ("grid", d1.date().isoformat(), 0.01))
+
+        tr = forward.tracking_vs_backtest(c, "grid")
+
+        self.assertTrue(tr["available"])
+        self.assertAlmostEqual(tr["live_pct"], 3.0)
+        self.assertAlmostEqual(tr["expected_pct"], 1.0)
+        self.assertAlmostEqual(tr["gap_pp"], 2.0)
+
+
+class TestReconcileHistory(unittest.TestCase):
+    def test_record_reconcile_result_and_show_latest_history(self):
+        c = make_db()
+        add_equity(c, "grid", 100_000, ts=NOW - 60)
+        rec = {"ok": False, "strategies": {"grid": {
+            "discrepancies": [{"strategy": "grid", "ticker": "SBER",
+                               "journal_lots": 2, "account_lots": 0,
+                               "issue": "в журнале есть, на счёте нет"}],
+            "active_orders": 0, "journal": {"SBER": 2}, "account": {}}}}
+
+        forward.record_reconcile(c, rec, ts=NOW)
+
+        row = c.execute("SELECT strategy,n_disc FROM reconciles").fetchone()
+        self.assertEqual(row, ("grid", 1))
+        txt = forward.daily_report(db=c, day=time.strftime("%Y-%m-%d", time.localtime(NOW)))
+        self.assertIn("история reconcile", txt)
+        self.assertIn("[grid] 1 расхождений", txt)
 
 
 class TestReconcile(unittest.TestCase):
@@ -213,6 +300,70 @@ class TestDailyReport(unittest.TestCase):
     def test_empty_journal(self):
         txt = forward.daily_report(db=make_db())
         self.assertIn("журнал пуст", txt)
+
+    def test_report_shows_futures_roll_warnings(self):
+        c = make_db()
+        day = time.strftime("%Y-%m-%d", time.localtime(NOW))
+        add_equity(c, "grid", 100000, ts=NOW - 60)
+        with mock.patch("lab.forward.futures_roll_warnings", return_value=[
+            {"ticker": "NGN6", "status": "ROLL_SOON", "days_to_last_trade": 2,
+             "roll_to": "NGQ6", "last_trade": "2026-07-29", "exp": "2026-07-30"}
+        ]):
+            txt = forward.daily_report(db=c, day=day)
+        self.assertIn("rollover", txt)
+        self.assertIn("NGN6", txt)
+        self.assertIn("NGQ6", txt)
+
+    def test_report_shows_tracking_when_expectations_exist(self):
+        c = make_db()
+        d0 = datetime.fromtimestamp(NOW).replace(hour=12, minute=0, second=0, microsecond=0)
+        d1 = d0 + timedelta(days=1)
+        add_equity(c, "grid", 100_000, ts=d0.timestamp())
+        add_equity(c, "grid", 102_000, ts=d1.timestamp())
+        c.execute("INSERT INTO expectations(strategy,date,exp_ret) VALUES(?,?,?)",
+                  ("grid", d1.date().isoformat(), 0.01))
+
+        txt = forward.daily_report(db=c, day=d1.date().isoformat())
+
+        self.assertIn("tracking", txt)
+        self.assertIn("gap +1.00 п.п.", txt)
+
+    def test_report_shows_order_fill_rate_from_latest_status(self):
+        c = make_db()
+        day = time.strftime("%Y-%m-%d", time.localtime(NOW))
+        add_equity(c, "grid", 100000, ts=NOW - 60)
+        c.execute("INSERT INTO orders(ts,strategy,order_id,side,price,lots,status,fill_price,commission,detail) "
+                  "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                  (NOW - 30, "grid", "o1", "buy:SBER", 300, 1, "submitted", None, None, ""))
+        c.execute("INSERT INTO orders(ts,strategy,order_id,side,price,lots,status,fill_price,commission,detail) "
+                  "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                  (NOW - 20, "grid", "o1", "buy:SBER", 300, 1, "filled", 300.1, 0.18, ""))
+        c.execute("INSERT INTO orders(ts,strategy,order_id,side,price,lots,status,fill_price,commission,detail) "
+                  "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                  (NOW - 10, "grid", "o2", "buy:SBER", 300, 1, "canceled", None, None, ""))
+
+        txt = forward.daily_report(db=c, day=day)
+
+        self.assertIn("fill-rate: 1/2", txt)
+        self.assertIn("filled=1", txt)
+        self.assertIn("canceled=1", txt)
+
+    def test_report_shows_partial_rate_from_latest_status(self):
+        c = make_db()
+        day = time.strftime("%Y-%m-%d", time.localtime(NOW))
+        add_equity(c, "grid", 100000, ts=NOW - 60)
+        c.execute("INSERT INTO orders(ts,strategy,order_id,side,price,lots,status,fill_price,commission,detail) "
+                  "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                  (NOW - 30, "grid", "o1", "buy:SBER", 300, 2, "partial", 300.1, 0.18,
+                   "lotsExecuted=1"))
+        c.execute("INSERT INTO orders(ts,strategy,order_id,side,price,lots,status,fill_price,commission,detail) "
+                  "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                  (NOW - 20, "grid", "o2", "buy:SBER", 300, 1, "filled", 300.2, 0.18, ""))
+
+        txt = forward.daily_report(db=c, day=day)
+
+        self.assertIn("partial-rate: 1/2", txt)
+        self.assertIn("partial=1", txt)
 
 
 if __name__ == "__main__":

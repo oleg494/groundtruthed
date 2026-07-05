@@ -23,12 +23,16 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+try:
+    from keyrate import KEYRATE
+except ImportError:
+    from scripts.keyrate import KEYRATE
+
 BASE = "https://invest-public-api.tinkoff.ru/rest"
 ROOT = Path(__file__).resolve().parent.parent
 
 # ───────────────────────── константы модели ─────────────────────────
 
-KEYRATE = 14.25          # ключевая ставка ЦБ, % (снижена 19.06.2026; синхронно с market_context/dashboard)
 RUONIA_DISCOUNT = 0.50   # RUONIA ≈ КС − 0.5 пп (профицит ликвидности; deep/money_market_and_floaters.md)
 # Денежный рынок: чистая доходность фонда ликвидности ≈ КС − ~0.65 пп
 # (TMON-спред: RUONIA-дисконт + TER/отставание; deep/lowrisk_ruble_portfolio.md даёт диапазон

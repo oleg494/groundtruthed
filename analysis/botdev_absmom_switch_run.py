@@ -25,11 +25,12 @@ from backtest import candles, metrics, run, strategies  # noqa: E402
 from backtest.core import Bar, Instrument  # noqa: E402
 from backtest.optimize import grid_search, walk_forward  # noqa: E402
 from backtest.robust import deflated_sharpe, probabilistic_sharpe  # noqa: E402
+from scripts.keyrate import KEYRATE  # noqa: E402
 
 CUTOFF = int(datetime(2022, 3, 24, tzinfo=timezone.utc).timestamp())  # пост-приостановка MOEX
 CASH = 1_000_000.0
 COMM, SLIP = 0.0005, 0.0005
-RATE = 14.25                                    # KEYRATE (scripts/market_context.py)
+RATE = KEYRATE
 GRID = {"lb_m": list(range(1, 13)),            # lookback 1..12 месяцев
         "hurdle": [0.0, 0.05, 0.10]}           # годовой порог 0/5/10%
 N_TRIALS = len(GRID["lb_m"]) * len(GRID["hurdle"])   # 36 испытаний сетки (для DSR)

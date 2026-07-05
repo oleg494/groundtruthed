@@ -1,9 +1,8 @@
-# Forward-test слой: что реализовано, что заглушки (2026-07-02)
+# Forward-test слой: что реализовано, что заглушки (2026-07-05)
 
-Реализация дизайна `deep/forward_test_layer_sandbox.md` в объёме, который поддерживает
-ТЕКУЩАЯ схема журнала (`lab/journal.py`: trades/equity/events). Новый код: `lab/forward.py`
-+ `test_forward.py` (15 unittest-моков, все зелёные). Существующие файлы `lab/` НЕ менялись
-(runner/journal/strategy/report нетронуты); `python -m unittest test_trading` — 8/8 OK.
+Реализация дизайна `deep/forward_test_layer_sandbox.md`. Схема журнала расширена
+аддитивно: старые `trades/equity/events` сохранены, в `trades` добавлены
+`fill_price/commission/status`, плюс таблицы `orders`, `expectations`, `reconciles`.
 
 ## Реализовано (работает на текущей схеме)
 
@@ -18,24 +17,26 @@
    последней сделки в тиках (прокси тика = записи equity).
 3. **Equity-статистика** (`equity_stats`) — доходность с начала, maxDD, текущая просадка,
    дневная волатильность (последний equity каждого дня, stdlib `statistics`).
-4. **daily_report** (CLI `python -m lab.forward report [--date YYYY-MM-DD] [--db PATH]`) —
+4. **Слиппедж v2** (`forward.slippage`) — если `trades.fill_price` заполнен, считает
+   adverse slippage: `fill_price-price` для buy и `price-fill_price` для sell, среднее
+   в пунктах цены и б.п. Старые журналы без `fill_price` честно дают `available=False`.
+5. **Order lifecycle stats** (`forward.order_stats`) — по последнему статусу каждого
+   `order_id` считает fill-rate и partial-rate; `daily_report` выводит оба показателя,
+   если таблица `orders` заполнена.
+6. **daily_report** (CLI `python -m lab.forward report [--date YYYY-MM-DD] [--db PATH]`) —
    P&L дня (руб и %), сделки/ошибки за день, накопленные метрики, алерты,
    reconcile-статус (офлайн — честное «не выполнялся»), хвост событий дня.
-5. **Алерты** (`check_alerts`, пороги — константы в шапке forward.py):
+7. **Алерты** (`check_alerts`, пороги — константы в шапке forward.py):
    - просадка от пика > `DD_LIMIT_PCT` (5%);
    - тишина: > `SILENCE_TICKS` (1000) equity-тиков без сделки (или вообще без сделок);
    - серия ошибок: ≥ `ERR_STREAK` (5) event'ов `%error%/%fail%` подряд в хвосте журнала.
 
-## Честные заглушки (данных в текущей схеме журнала нет)
+## Честные заглушки / незавершённые потребители v2-схемы
 
-1. **Слиппедж** (`forward.slippage`) — `available: False`. Причина: `trades.price` для
-   market-ордеров — это **last price на момент решения** (`Ctx.market` пишет
-   `ctx.prices[ticker]`), а цены ИСПОЛНЕНИЯ в журнале нет нигде; в `events` цен тоже нет.
-2. **Tracking live-vs-backtest** (`tracking_vs_backtest`) — гэп считается только если
-   ожидаемая дневная доходность передана параметром; источника ожиданий внутри lab.db
-   нет. Каркас готов: live-кривая и кумулятивный гэп считаются, не хватает эталона.
-3. **Fill-rate / partial fills** из дизайна — не реализуемо: журнал не хранит статусы
-   заявок (submitted/filled/canceled), только факт «сделка записана».
+1. **Partial fills** из дизайна — схема уже добавляет `trades.status`
+   и таблицу `orders`; `Journal.order()` умеет писать lifecycle-строки, а `daily_report`
+   показывает fill-rate и partial-rate по последнему статусу `order_id`. Runner/daybot пока
+   не подключены к этому helper, поэтому на реальном журнале строк может не быть.
 
 ## Какие поля добавить в журнал (минимальный набор, без ломки схемы)
 
@@ -43,11 +44,11 @@
 
 | Что | Куда | Откуда брать | Что разблокирует |
 |---|---|---|---|
-| `fill_price REAL` | trades | `GetSandboxOrderState.averagePositionPrice` (опрос после отправки) или OperationsService | слиппедж = fill_price − price (текущий price оставить как decision price) |
-| `commission REAL` | trades | `GetSandboxOrderState.executedCommission` | честный P&L по сделкам, сверка с equity |
-| `status TEXT` | trades (или отдельная таблица orders) | lifecycle заявки: submitted/filled/canceled/failed | fill-rate, partial-rate, «заявка зависла» |
-| таблица `expectations(strategy, date, exp_ret REAL)` | новая | прогон `python -m backtest study` на том же периоде | tracking_vs_backtest без ручного параметра, алерт «гэп > 5 п.п.» |
-| таблица `reconciles(ts, strategy, n_disc, detail)` | новая | результат `forward.reconcile` по расписанию | история расхождений в daily_report, алерт на повторные mismatches |
+| `fill_price REAL` | trades | `GetSandboxOrderState.averagePositionPrice` (опрос после отправки) или OperationsService | схема есть; slippage считает при заполнении |
+| `commission REAL` | trades | `GetSandboxOrderState.executedCommission` | схема есть; P&L по сделкам ещё не использует поле |
+| `status TEXT` | trades + `orders` | lifecycle заявки: submitted/partial/filled/canceled/failed | схема и `Journal.order()` есть; fill-rate и partial-rate в отчёте есть |
+| таблица `expectations(strategy, date, exp_ret REAL)` | новая | прогон `python -m backtest study` на том же периоде | схема есть; `tracking_vs_backtest` читает её при наличии дат |
+| таблица `reconciles(ts, strategy, n_disc, detail)` | новая | результат `forward.reconcile` по расписанию | схема есть; CLI `reconcile` пишет историю, `daily_report` показывает последние 5 записей |
 
 ## Ограничения / примечания
 

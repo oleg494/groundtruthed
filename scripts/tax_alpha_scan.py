@@ -152,7 +152,7 @@ def resolve(uid: str) -> dict:
                 "name": ins.get("name", ""), "exchange": ins.get("exchange", "")}
         if info["type"] == "bond":
             time.sleep(0.3)
-            b = call("InstrumentsService/GetBondBy",
+            b = call("InstrumentsService/BondBy",
                      {"idType": "INSTRUMENT_ID_TYPE_UID", "id": uid}).get("instrument", {})
             info["nominal"] = tof(b.get("nominal"))
             info["aci"] = tof(b.get("aciValue"))
