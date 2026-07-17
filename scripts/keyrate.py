@@ -17,7 +17,9 @@ KEYRATE_EVENTS: list[tuple[date, float]] = [
 
 KEYRATE = KEYRATE_EVENTS[-1][1]
 
-CB_MEETINGS_2026 = ["2026-07-25", "2026-09-12", "2026-10-24", "2026-12-19"]
+# CBR board meeting dates, H2 2026 (cbr.ru/dkp/cal_mp). All are FRIDAYS — the
+# previous list had Saturdays (+1 day hallucination); test_keyrate guards this.
+CB_MEETINGS_2026 = ["2026-07-24", "2026-09-11", "2026-10-23", "2026-12-18"]
 
 
 def keyrate_on(day: date) -> float:
