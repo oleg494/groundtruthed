@@ -38,6 +38,13 @@ def load_token() -> str:
     raise SystemExit("no token in .env")
 
 
+def load_accounts() -> list:
+    for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
+        if line.startswith("TINVEST_ACCOUNTS="):
+            return [a.strip() for a in line.split("=", 1)[1].split(",") if a.strip()]
+    raise SystemExit("Set TINVEST_ACCOUNTS=id1,id2 in .env")
+
+
 TOKEN = load_token()
 
 
@@ -96,7 +103,7 @@ BLUECHIPS = [
     ("NVTK", "0da66728-6c30-44c4-9264-df8fac2467ee"),
     ("MGNT", "ca845f68-6c43-44bc-b584-330d2a1e5eb7"),
 ]
-ACCOUNTS = ["0000000000", "0000000001"]
+ACCOUNTS = load_accounts()
 
 
 def mvals(uids):
